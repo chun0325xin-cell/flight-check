@@ -5,6 +5,52 @@ type BookingRequest = {
   name: string; email: string; phone: string; notes?: string; total: number; deposit: number;
 };
 
+type NotificationEnv = {
+  RESEND_API_KEY?: string;
+  BOOKING_EMAIL?: string;
+  BOOKING_FROM_EMAIL?: string;
+};
+
+async function sendBookingNotification(id: string, body: BookingRequest) {
+  const notificationEnv = env as unknown as NotificationEnv;
+  if (!notificationEnv.RESEND_API_KEY || !notificationEnv.BOOKING_EMAIL) return false;
+
+  const text = [
+    "A new photoshoot was scheduled.",
+    "",
+    `Client: ${body.name}`,
+    `Email: ${body.email}`,
+    `Phone: ${body.phone}`,
+    `Session: ${body.packageName}`,
+    `Date: ${body.date}`,
+    `Time: ${body.time}`,
+    `Total: $${body.total}`,
+    `Deposit: $${body.deposit}`,
+    `Notes: ${body.notes || "None"}`,
+    "",
+    `Booking reference: ${id}`,
+    "Payment status: awaiting Stripe checkout",
+  ].join("\n");
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${notificationEnv.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": `booking-${id}`,
+    },
+    body: JSON.stringify({
+      from: notificationEnv.BOOKING_FROM_EMAIL || "Joli's Photos <onboarding@resend.dev>",
+      to: [notificationEnv.BOOKING_EMAIL],
+      reply_to: body.email,
+      subject: `New booking: ${body.packageName} on ${body.date}`,
+      text,
+    }),
+  });
+
+  return response.ok;
+}
+
 const schema = `CREATE TABLE IF NOT EXISTS bookings (
   id TEXT PRIMARY KEY,
   package_id TEXT NOT NULL,
@@ -28,7 +74,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Please complete all required fields." }, { status: 400 });
     }
     const db = env.DB;
-    if (!db) return Response.json({ id: crypto.randomUUID(), preview: true });
+    if (!db) return Response.json({ id: crypto.randomUUID(), preview: true, notificationSent: false });
     await db.prepare(schema).run();
     await db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS booking_time_idx ON bookings(session_date, session_time)").run();
     const id = crypto.randomUUID();
@@ -36,7 +82,13 @@ export async function POST(request: Request) {
       (id, package_id, package_name, session_date, session_time, customer_name, email, phone, notes, total_cents, deposit_cents)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .bind(id, body.packageId, body.packageName, body.date, body.time, body.name, body.email, body.phone, body.notes || "", Math.round(body.total * 100), Math.round(body.deposit * 100)).run();
-    return Response.json({ id });
+    let notificationSent = false;
+    try {
+      notificationSent = await sendBookingNotification(id, body);
+    } catch {
+      // A temporary email-provider issue must never lose a valid reservation.
+    }
+    return Response.json({ id, notificationSent });
   } catch (error) {
     const text = error instanceof Error ? error.message : "Booking failed";
     if (text.includes("UNIQUE")) return Response.json({ error: "That time was just booked. Please choose another time." }, { status: 409 });

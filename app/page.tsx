@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type Package = {
   id: string;
@@ -40,8 +40,18 @@ export default function Home() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [status, setStatus] = useState<"idle" | "saving" | "payment" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [paymentResult, setPaymentResult] = useState<"success" | "cancelled" | null>(null);
   const selected = useMemo(() => packages.find((item) => item.id === selectedId) ?? packages[1], [selectedId]);
   const deposit = Math.max(15, Math.round(selected.price * 0.3));
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("payment");
+    if (result === "success" || result === "cancelled") {
+      setPaymentResult(result);
+      window.history.replaceState({}, "", `${window.location.pathname}${result === "cancelled" ? "#booking" : ""}`);
+    }
+  }, []);
 
   function choosePackage(id: string) {
     setSelectedId(id);
@@ -86,14 +96,15 @@ export default function Home() {
         const result = await bookingResponse.json() as { error?: string };
         throw new Error(result.error || "We couldn’t reserve that time.");
       }
-      const booking = await bookingResponse.json() as { id: string };
+      const booking = await bookingResponse.json() as { id: string; notificationSent?: boolean };
       setStatus("payment");
       const paymentResponse = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId: booking.id, packageId: selected.id }),
+        body: JSON.stringify({ bookingId: booking.id, packageId: selected.id, customerEmail: payload.email }),
       });
-      const payment = await paymentResponse.json() as { url?: string; setupRequired?: boolean };
+      const payment = await paymentResponse.json() as { url?: string; setupRequired?: boolean; error?: string };
+      if (!paymentResponse.ok) throw new Error(payment.error || "Payment checkout could not start. Your time is still reserved.");
       if (payment.url) {
         window.location.href = payment.url;
         return;
@@ -122,6 +133,14 @@ export default function Home() {
         </div>
         <a className="button button-small" href="#booking">Book a shoot</a>
       </nav>
+
+      {paymentResult && (
+        <div className={`payment-banner ${paymentResult}`} role="status">
+          <strong>{paymentResult === "success" ? "Deposit received — your session is booked!" : "Payment wasn’t completed."}</strong>
+          <span>{paymentResult === "success" ? "Stripe will email your receipt." : "Your time is reserved; return to booking when you’re ready to pay."}</span>
+          <button onClick={() => setPaymentResult(null)} aria-label="Dismiss message">×</button>
+        </div>
+      )}
 
       <section className="hero" id="top">
         <div className="hero-copy">
