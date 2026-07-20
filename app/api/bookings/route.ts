@@ -13,7 +13,9 @@ type NotificationEnv = {
 
 async function sendBookingNotification(id: string, body: BookingRequest) {
   const notificationEnv = env as unknown as NotificationEnv;
-  if (!notificationEnv.RESEND_API_KEY || !notificationEnv.BOOKING_EMAIL) return false;
+  if (!notificationEnv.RESEND_API_KEY || !notificationEnv.BOOKING_EMAIL) {
+    return { sent: false, error: "Email settings are incomplete." };
+  }
 
   const text = [
     "A new photoshoot was scheduled.",
@@ -48,7 +50,9 @@ async function sendBookingNotification(id: string, body: BookingRequest) {
     }),
   });
 
-  return response.ok;
+  if (response.ok) return { sent: true };
+  const providerMessage = (await response.text()).slice(0, 300);
+  return { sent: false, error: `Resend ${response.status}: ${providerMessage}` };
 }
 
 const schema = `CREATE TABLE IF NOT EXISTS bookings (
@@ -82,13 +86,18 @@ export async function POST(request: Request) {
       (id, package_id, package_name, session_date, session_time, customer_name, email, phone, notes, total_cents, deposit_cents)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .bind(id, body.packageId, body.packageName, body.date, body.time, body.name, body.email, body.phone, body.notes || "", Math.round(body.total * 100), Math.round(body.deposit * 100)).run();
-    let notificationSent = false;
+    let notificationResult: { sent: boolean; error?: string } = { sent: false };
     try {
-      notificationSent = await sendBookingNotification(id, body);
-    } catch {
+      notificationResult = await sendBookingNotification(id, body);
+    } catch (error) {
       // A temporary email-provider issue must never lose a valid reservation.
+      notificationResult = { sent: false, error: error instanceof Error ? error.message : "Email request failed." };
     }
-    return Response.json({ id, notificationSent });
+    return Response.json({
+      id,
+      notificationSent: notificationResult.sent,
+      ...(body.packageId === "email-test" ? { notificationError: notificationResult.error } : {}),
+    });
   } catch (error) {
     const text = error instanceof Error ? error.message : "Booking failed";
     if (text.includes("UNIQUE")) return Response.json({ error: "That time was just booked. Please choose another time." }, { status: 409 });
