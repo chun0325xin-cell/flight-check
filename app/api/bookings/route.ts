@@ -42,7 +42,7 @@ async function sendBookingNotification(id: string, body: BookingRequest) {
       "Idempotency-Key": `booking-${id}`,
     },
     body: JSON.stringify({
-      from: notificationEnv.BOOKING_FROM_EMAIL || "Joli's Photos <onboarding@resend.dev>",
+      from: notificationEnv.BOOKING_FROM_EMAIL || "Joli's Photo <onboarding@resend.dev>",
       to: [notificationEnv.BOOKING_EMAIL],
       reply_to: body.email,
       subject: `New booking: ${body.packageName} on ${body.date}`,

@@ -122,9 +122,9 @@ export default function Home() {
   return (
     <main>
       <nav className="nav">
-        <a className="brand" href="#top" aria-label="Joli's Photos home">
-          <span className="brand-mark">J</span>
-          <span>Joli’s <i>Photos</i></span>
+        <a className="brand" href="#top" aria-label="Joli's Photo home">
+          <img className="brand-logo" src="/logo-cherry-camera.png" alt="" />
+          <span>Joli’s <i>Photo</i></span>
         </a>
         <div className="nav-links">
           <a href="#packages">Packages</a>
@@ -156,17 +156,16 @@ export default function Home() {
             <p><strong>Easy booking</strong><br />Pick a package, time, and pay online.</p>
           </div>
         </div>
-        <div className="hero-art" aria-label="Joli's Photos editorial brand artwork">
-          <div className="art-topline"><span>Joli’s Photos</span><span>Est. 2026</span></div>
-          <div className="editorial-print">
-            <div className="print-image">
-              <span className="light-leak" />
-              <span className="portrait-arch arch-one" />
-              <span className="portrait-arch arch-two" />
-              <div className="portrait-monogram">J<span>×</span>P</div>
-              <p>Portraits that feel<br />like <em>home.</em></p>
-            </div>
-            <div className="print-footer"><span>Frame 01</span><strong>Joli’s Photos</strong><span>Made with care</span></div>
+        <div className="hero-art" aria-label="Joli's Photo cherry-red anime artwork">
+          <div className="art-topline"><span>Cherry-bright memories</span><span>Est. 2026</span></div>
+          <div className="anime-print">
+            <img src="/hero-anime-cherry.png" alt="Anime-style red camera with cherries and a pink bow" />
+            <span className="image-corner">♡</span>
+          </div>
+          <div className="brand-ribbon">
+            <small>Welcome to</small>
+            <strong>Joli’s Photo</strong>
+            <span>cute moments · beautifully kept</span>
           </div>
           <div className="availability-card">
             <span className="availability-dot" />
@@ -174,8 +173,8 @@ export default function Home() {
             <strong>Portraits & group sessions</strong>
             <a href="#booking">Find your date <span>→</span></a>
           </div>
-          <div className="art-seal"><span>J</span><small>real moments<br />beautifully kept</small></div>
-          <p className="script-note">soft light · real smiles · lasting memories</p>
+          <div className="logo-sticker"><img src="/logo-cherry-camera.png" alt="Joli's Photo cherry camera logo" /></div>
+          <p className="script-note">cherries · bows · cameras · sweet memories</p>
         </div>
       </section>
 
@@ -248,7 +247,7 @@ export default function Home() {
         <div><span>01</span><p><strong>Choose</strong><br />Pick the session that fits your story.</p><span>02</span><p><strong>Show up</strong><br />I’ll guide you so it never feels awkward.</p><span>03</span><p><strong>Keep it</strong><br />Receive polished photos in your gallery.</p></div>
       </section>
 
-      <footer><a className="brand" href="#top"><span className="brand-mark">J</span><span>Joli’s <i>Photos</i></span></a><p>Portraits made personal.</p><a href="https://www.instagram.com/jolis.photos/" target="_blank" rel="noreferrer">@jolis.photos ↗</a></footer>
+      <footer><a className="brand" href="#top"><img className="brand-logo" src="/logo-cherry-camera.png" alt="" /><span>Joli’s <i>Photo</i></span></a><p>Portraits made personal.</p><a href="https://www.instagram.com/jolis.photos/" target="_blank" rel="noreferrer">@jolis.photos ↗</a></footer>
     </main>
   );
 }
