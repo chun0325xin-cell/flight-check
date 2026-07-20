@@ -156,13 +156,25 @@ export default function Home() {
             <p><strong>Easy booking</strong><br />Pick a package, time, and pay online.</p>
           </div>
         </div>
-        <div className="hero-art" aria-label="Joli's Photos brand artwork">
-          <div className="photo-frame">
-            <div className="frame-glow" />
-            <div className="frame-copy"><span>Joli’s</span><strong>PHOTOS</strong><small>made with care</small></div>
+        <div className="hero-art" aria-label="Joli's Photos editorial brand artwork">
+          <div className="art-topline"><span>Joli’s Photos</span><span>Est. 2026</span></div>
+          <div className="editorial-print">
+            <div className="print-image">
+              <span className="light-leak" />
+              <span className="portrait-arch arch-one" />
+              <span className="portrait-arch arch-two" />
+              <div className="portrait-monogram">J<span>×</span>P</div>
+              <p>Portraits that feel<br />like <em>home.</em></p>
+            </div>
+            <div className="print-footer"><span>Frame 01</span><strong>Joli’s Photos</strong><span>Made with care</span></div>
           </div>
-          <div className="polaroid"><span>YOUR STORY</span><b>beautifully kept</b></div>
-          <div className="berry berry-one" /><div className="berry berry-two" /><div className="berry berry-three" />
+          <div className="availability-card">
+            <span className="availability-dot" />
+            <small>Now booking</small>
+            <strong>Portraits & group sessions</strong>
+            <a href="#booking">Find your date <span>→</span></a>
+          </div>
+          <div className="art-seal"><span>J</span><small>real moments<br />beautifully kept</small></div>
           <p className="script-note">soft light · real smiles · lasting memories</p>
         </div>
       </section>
