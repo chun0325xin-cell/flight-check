@@ -200,6 +200,8 @@ class FlightCheckTests(unittest.TestCase):
         self.assertNotIn(b'name="checkpoints"', response.data)
         self.assertNotIn(b'name="payload_weight"', response.data)
         self.assertIn(b"John F. Kennedy International Airport (KJFK)", response.data)
+        self.assertIn(b'id="airport-options"', response.data)
+        self.assertIn(b'list="airport-options"', response.data)
         self.assertIn(b'name="departure"', response.data)
         self.assertIn(b'name="destination"', response.data)
 

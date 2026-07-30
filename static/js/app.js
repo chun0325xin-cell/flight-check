@@ -301,7 +301,27 @@ if (routeAircraftData) {
 
 const aiRouteForm = document.querySelector("#ai-route-form");
 if (aiRouteForm) {
-  aiRouteForm.addEventListener("submit", () => {
+  aiRouteForm.addEventListener("submit", (event) => {
+    const airportFields = [
+      [document.querySelector("#departure-airport-search"), document.querySelector("#departure-airport-code")],
+      [document.querySelector("#arrival-airport-search"), document.querySelector("#arrival-airport-code")],
+    ];
+    let validAirports = true;
+    airportFields.forEach(([search, code]) => {
+      const match = search.value.trim().match(/\(([A-Z0-9]{3,4})\)$/);
+      if (!match) {
+        search.setCustomValidity("Choose an airport from the suggestions.");
+        validAirports = false;
+      } else {
+        search.setCustomValidity("");
+        code.value = match[1];
+      }
+    });
+    if (!validAirports) {
+      event.preventDefault();
+      airportFields.find(([search]) => !search.checkValidity())?.[0].reportValidity();
+      return;
+    }
     const submit = document.querySelector("#ai-route-submit");
     if (!submit) return;
     submit.disabled = true;
