@@ -298,3 +298,14 @@ if (routeAircraftData) {
     replaceOptions(modelSelect, "Choose model", models);
   });
 }
+
+const aiRouteForm = document.querySelector("#ai-route-form");
+if (aiRouteForm) {
+  aiRouteForm.addEventListener("submit", () => {
+    const submit = document.querySelector("#ai-route-submit");
+    if (!submit) return;
+    submit.disabled = true;
+    submit.classList.add("is-loading");
+    submit.innerHTML = "<i>Generating both routes… about 30 seconds</i><span>◌</span>";
+  });
+}

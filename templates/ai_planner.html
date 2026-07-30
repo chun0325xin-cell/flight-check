@@ -12,7 +12,7 @@
     <div><span>03</span><strong>AI comparison</strong><small>Fuel & time routes</small></div>
     <p><b>Candidate only.</b> The agent cannot approve a flight. Every result needs current charts, weather, NOTAMs, POH data, weight and balance, ATC, and instructor review.</p>
   </aside>
-  <form class="planner-form" method="post">
+  <form class="planner-form" method="post" id="ai-route-form">
     <section>
       <div class="planner-section-title"><span>01</span><div><small data-i18n="mission">MISSION</small><h2 data-i18n="where_fly">Where will you fly?</h2></div></div>
       <div class="field-grid">
@@ -35,7 +35,7 @@
     </section>
     <div class="planner-submit">
       <div><small>Educational boundary</small><p>The generated route and altitudes are questions to verify—not navigation instructions, a clearance, or a legal flight plan.</p></div>
-      <button class="button primary" type="submit"><i>Generate both routes</i> <span>↗</span></button>
+      <button class="button primary" type="submit" id="ai-route-submit"><i>Generate both routes</i> <span>↗</span></button>
     </div>
   </form>
 </section>
