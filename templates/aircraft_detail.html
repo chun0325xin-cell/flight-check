@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ aircraft.name }} — FlightCheck Aircraft Library{% endblock %}
+{% block content %}
+<section class="aircraft-detail-hero">
+  <div class="aircraft-detail-photo"><img src="{{ aircraft.image }}" alt="{{ aircraft.maker }} {{ aircraft.name }} aircraft photograph"><span>VERIFIED FAMILY / MODEL PHOTO</span><a href="{{ aircraft.image_source }}" target="_blank" rel="noopener">PHOTO SOURCE · COMMONS ↗</a></div>
+  <div class="aircraft-detail-intro">
+    <a href="{{ url_for('aircraft') }}">← Aircraft library</a>
+    <div class="eyebrow"><span></span> {{ aircraft.maker|upper }} / {{ aircraft.family|upper }}</div>
+    <h1>{{ aircraft.name }}</h1>
+    <p>{{ aircraft.faa_model or aircraft.name }} · ICAO designator <strong>{{ aircraft.icao }}</strong></p>
+    <div class="aircraft-detail-tags"><span>{{ aircraft.class_name }}</span><span>{{ aircraft.engine_type or "Engine data unavailable" }}</span><span>{{ aircraft.engines or "—" }} engine{% if aircraft.engines != 1 %}s{% endif %}</span></div>
+  </div>
+</section>
+<section class="aircraft-spec-section">
+  <div class="aircraft-spec-heading"><div><small>FAA AIRCRAFT CHARACTERISTICS + GAME MASTER LIST</small><h2>Aircraft at a glance.</h2></div><p>FAA measurements describe representative aircraft types and may group several variants under one ICAO designator. Game capacity, range, and price come from The Airline Simulator list you supplied.</p></div>
+  <div class="aircraft-spec-grid">
+    <div><small>Game maximum seats</small><strong>{{ aircraft.seats }}</strong><span>passengers</span></div>
+    <div><small>Game range</small><strong>{{ aircraft.range_km }}</strong><span>km · {{ aircraft.range_nm }} nm</span></div>
+    <div><small>Maximum takeoff weight</small><strong>{% if aircraft.mtow_lb %}{{ "{:,.0f}".format(aircraft.mtow_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.mtow_lb %}lb{% else %}not available in FAA match{% endif %}</span></div>
+    <div><small>Wingspan</small><strong>{% if aircraft.wingspan_ft %}{{ "%.1f"|format(aircraft.wingspan_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.wingspan_ft %}ft · {{ "%.1f"|format(aircraft.wingspan_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
+    <div><small>Overall length</small><strong>{% if aircraft.length_ft %}{{ "%.1f"|format(aircraft.length_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.length_ft %}ft · {{ "%.1f"|format(aircraft.length_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
+    <div><small>Tail height</small><strong>{% if aircraft.height_ft %}{{ "%.1f"|format(aircraft.height_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.height_ft %}ft · {{ "%.1f"|format(aircraft.height_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
+    <div><small>Maximum landing weight</small><strong>{% if aircraft.landing_weight_lb is number %}{{ "{:,.0f}".format(aircraft.landing_weight_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.landing_weight_lb is number %}lb{% else %}not available{% endif %}</span></div>
+    <div><small>Approach reference</small><strong>{{ aircraft.approach_speed_knot or "—" }}</strong><span>{% if aircraft.approach_speed_knot %}knots · FAA database value{% else %}not available{% endif %}</span></div>
+    <div><small>ICAO wake category</small><strong>{{ aircraft.wake_category or "—" }}</strong><span>planning reference</span></div>
+    <div><small>Game base price</small><strong>${{ aircraft.price }}</strong><span>simulator value</span></div>
+  </div>
+  <div class="aircraft-data-sources">
+    <div><strong>FAA Aircraft Characteristics Database</strong><p>Dimensions, weights, engine class, approach speed, and wake category matched through the ICAO designator.</p><a href="https://www.faa.gov/airports/engineering/aircraft_char_database" target="_blank" rel="noopener">View official dataset ↗</a></div>
+    <div><strong>The Airline Simulator master list</strong><p>Variant name, game capacity, game range, ICAO code, and simulator price.</p><a href="https://the-airline-simulator.fandom.com/wiki/Category:Aircraft" target="_blank" rel="noopener">View source page ↗</a></div>
+  </div>
+  <p class="map-disclaimer">Educational reference only. Do not use these summary values for weight-and-balance, performance, dispatch, airport compatibility, or operational decisions. Consult approved aircraft documents.</p>
+</section>
+{% endblock %}

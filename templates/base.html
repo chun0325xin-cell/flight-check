@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" data-language="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="FlightCheck is an educational preflight risk reflection tool for student pilots.">
+  <title>{% block title %}FlightCheck{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-aviation') }}">
+  <script defer src="{{ url_for('static', filename='js/app.js', v='20260730-i18n') }}"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="FlightCheck home">
+      <span class="brand-mark" aria-hidden="true">FC</span>
+      <span>Flight<strong>Check</strong></span>
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="{{ url_for('briefing') }}#assessment" data-i18n="nav_assess">Assess</a>
+      <a href="{{ url_for('ai_route_planner') }}" data-i18n="nav_route">Route planner</a>
+      <a href="{{ url_for('aircraft') }}" data-i18n="nav_aircraft">Aircraft</a>
+      <a href="{{ url_for('history') }}" data-i18n="nav_history">History</a>
+      <a href="{{ url_for('about') }}" data-i18n="nav_about">About</a>
+    </nav>
+    <a class="planner-cta" href="{{ url_for('ai_route_planner') }}"><span aria-hidden="true">✦</span> <i data-i18n="nav_ai_route">AI route</i></a>
+    <a class="nav-cta" href="{{ url_for('briefing') }}#assessment"><span data-i18n="start_briefing">Start briefing</span> <span>→</span></a>
+    <label class="language-control" aria-label="Language">
+      <span aria-hidden="true">◎</span>
+      <select id="language-select" aria-label="Language">
+        <option value="en">EN</option>
+        <option value="zh">中文</option>
+        <option value="es">ES</option>
+      </select>
+    </label>
+  </header>
+  <div class="aviation-ribbon" aria-label="FlightCheck aviation network">
+    <span class="ribbon-label" data-i18n="network_label">FLIGHTCHECK AVIATION NETWORK</span>
+    <div class="aviation-mark"><b>NS</b><span>NORTHSTAR<small>TRAINING AIR</small></span></div>
+    <div class="aviation-mark wing-mark"><b>AL</b><span>AERO LINK<small>ROUTE LAB</small></span></div>
+    <div class="aviation-mark alliance-mark"><b>SA</b><span>SKYWAY<small>LEARNING ALLIANCE</small></span></div>
+    <span class="ribbon-status"><i></i><span data-i18n="network_status">PLANNING SYSTEM ONLINE</span></span>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack" aria-live="polite">
+        {% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  <main id="main">{% block content %}{% endblock %}</main>
+  <footer>
+    <a class="brand footer-brand" href="{{ url_for('index') }}"><span class="brand-mark">FC</span><span>Flight<strong>Check</strong></span></a>
+    <p>Think clearly. Decide deliberately. Fly safely.</p>
+    <p class="footer-note">Educational use only — not an official flight-planning source.</p>
+  </footer>
+</body>
+</html>

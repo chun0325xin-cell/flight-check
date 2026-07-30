@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow"><span></span> Student pilot decision support</div>
+      <h1>A clearer view<br>before <em>takeoff.</em></h1>
+      <p>FlightCheck turns the PAVE checklist into a guided preflight reflection—helping student pilots spot risk clusters before external pressure takes over.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="#assessment">Run a FlightCheck <span>↗</span></a>
+        <a class="text-link" href="{{ url_for('about') }}">How it works <span>→</span></a>
+      </div>
+      <div class="trust-row">
+        <div><strong>4</strong><span>PAVE categories</span></div>
+        <div><strong>&lt; 3 min</strong><span>to complete</span></div>
+        <div><strong>100%</strong><span>educational</span></div>
+      </div>
+    </div>
+    <div class="hero-panel">
+      <div class="radar" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+      <div class="panel-label"><span class="live-dot"></span> Briefing framework online</div>
+      <div class="panel-route">
+        <span>DEPARTURE</span><b>YOU</b><i></i><strong>BETTER<br>DECISION</strong>
+      </div>
+      <div class="instrument-card">
+        <span>Risk awareness</span>
+        <strong>See the whole picture.</strong>
+        <div class="meter"><i></i></div>
+        <small>PILOT · AIRCRAFT · ENVIRONMENT · PRESSURES</small>
+      </div>
+      <span class="coordinate">PAVE / 04 FACTORS / READY</span>
+    </div>
+  </div>
+</section>
+
+<section class="pave-strip" aria-label="PAVE categories">
+  <div><span>01</span><strong>Pilot</strong><small>Readiness & experience</small></div>
+  <div><span>02</span><strong>Aircraft</strong><small>Condition & reserves</small></div>
+  <div><span>03</span><strong>enVironment</strong><small>Weather & conditions</small></div>
+  <div><span>04</span><strong>External pressures</strong><small>Schedule & expectations</small></div>
+</section>
+
+<section class="assessment-section" id="assessment">
+  <div class="section-intro">
+    <div class="eyebrow"><span></span> Guided assessment</div>
+    <h2>Build your risk picture.</h2>
+    <p>Answer honestly using current information. FlightCheck will identify patterns—not make the go/no-go decision for you.</p>
+    <div class="progress-wrap"><div class="progress-label"><span>Briefing progress</span><b id="progress-label">1 of 4</b></div><div class="progress-track"><i id="progress-bar"></i></div></div>
+  </div>
+
+  <form class="assessment-form" action="{{ url_for('assess') }}" method="post" id="assessment-form">
+    <div class="form-topline">
+      <label class="flight-name">Briefing label <input name="flight_name" maxlength="80" placeholder="e.g. Morning pattern flight"></label>
+      <span>Saved automatically on assessment</span>
+    </div>
+
+    <fieldset class="form-step active" data-step="1">
+      <legend><span>01</span><div><small>P — PILOT</small>How ready are you?</div></legend>
+      <div class="field-grid">
+        <label class="field">Total flight hours<input type="number" name="experience" min="0" max="5000" value="45" required><small>Approximate logged experience</small></label>
+        <label class="field">Sleep in the last 24 hours<input type="number" name="sleep" min="0" max="24" step="0.5" value="7" required><small>Include naps</small></label>
+      </div>
+      <div class="choice-field"><span>Current stress or distraction level</span><div class="choice-grid">
+        <label><input type="radio" name="stress" value="low" checked><span><b>Low</b><small>Focused and present</small></span></label>
+        <label><input type="radio" name="stress" value="moderate"><span><b>Moderate</b><small>Some distraction</small></span></label>
+        <label><input type="radio" name="stress" value="high"><span><b>High</b><small>Hard to focus</small></span></label>
+      </div></div>
+    </fieldset>
+
+    <fieldset class="form-step" data-step="2">
+      <legend><span>02</span><div><small>A — AIRCRAFT</small>Is the aircraft ready?</div></legend>
+      <div class="choice-field"><span>Aircraft condition and maintenance status</span><div class="choice-grid">
+        <label><input type="radio" name="aircraft_status" value="clear" checked><span><b>No known issues</b><small>Inspections current</small></span></label>
+        <label><input type="radio" name="aircraft_status" value="monitor"><span><b>Needs attention</b><small>Review before flight</small></span></label>
+        <label><input type="radio" name="aircraft_status" value="unresolved"><span><b>Unresolved issue</b><small>Discrepancy exists</small></span></label>
+      </div></div>
+      <label class="field slider-field">Planned fuel margin after landing <output id="fuel-output">75 min</output><input type="range" name="fuel_margin" min="0" max="180" value="75" data-output="fuel-output" data-suffix=" min"><small>Verify against regulations and aircraft-specific planning.</small></label>
+    </fieldset>
+
+    <fieldset class="form-step" data-step="3">
+      <legend><span>03</span><div><small>V — ENVIRONMENT</small>What are the conditions?</div></legend>
+      <div class="choice-field"><span>Overall weather trend</span><div class="choice-grid">
+        <label><input type="radio" name="weather" value="stable" checked><span><b>Stable / favorable</b><small>Comfortable margin</small></span></label>
+        <label><input type="radio" name="weather" value="mixed"><span><b>Mixed / changing</b><small>Watch the trend</small></span></label>
+        <label><input type="radio" name="weather" value="marginal"><span><b>Marginal</b><small>Near minimums</small></span></label>
+      </div></div>
+      <div class="field-grid three">
+        <label class="field">Visibility (statute miles)<input type="number" name="visibility" min="0" max="100" step="0.1" value="10" required></label>
+        <label class="field">Surface wind (knots)<input type="number" name="wind" min="0" max="150" value="8" required></label>
+        <label class="field">Crosswind component (knots)<input type="number" name="crosswind" min="0" max="100" value="4" required></label>
+      </div>
+      <div class="choice-field compact"><span>Is any portion planned at night?</span><div class="choice-grid two">
+        <label><input type="radio" name="night" value="no" checked><span><b>No</b></span></label>
+        <label><input type="radio" name="night" value="yes"><span><b>Yes</b></span></label>
+      </div></div>
+    </fieldset>
+
+    <fieldset class="form-step" data-step="4">
+      <legend><span>04</span><div><small>E — EXTERNAL PRESSURES</small>What is influencing the decision?</div></legend>
+      <div class="choice-field"><span>Pressure to complete this flight</span><div class="choice-grid">
+        <label><input type="radio" name="pressure_level" value="low" checked><span><b>Low</b><small>Easy to delay</small></span></label>
+        <label><input type="radio" name="pressure_level" value="moderate"><span><b>Moderate</b><small>Plans depend on it</small></span></label>
+        <label><input type="radio" name="pressure_level" value="high"><span><b>High</b><small>Strong expectations</small></span></label>
+      </div></div>
+      <div class="final-check"><span>Before continuing</span><p>This tool does not check METARs, TAFs, NOTAMs, aircraft airworthiness, performance, or legal requirements. Use official sources and qualified instruction.</p></div>
+    </fieldset>
+
+    <div class="form-actions">
+      <button class="button ghost" type="button" id="back-button" hidden>← Back</button>
+      <span class="step-hint" id="step-hint">Pilot readiness</span>
+      <button class="button primary" type="button" id="next-button">Continue <span>→</span></button>
+      <button class="button primary submit" type="submit" id="submit-button" hidden>Generate briefing <span>↗</span></button>
+    </div>
+  </form>
+</section>
+
+<section class="safety-callout">
+  <span class="callout-mark">!</span>
+  <div><small>Important limitation</small><h2>A reflection tool—not a clearance.</h2></div>
+  <p>FlightCheck supports aeronautical decision-making practice. It never replaces an instructor, official weather briefing, FAA regulations, aircraft documents, or pilot-in-command responsibility.</p>
+</section>
+{% endblock %}

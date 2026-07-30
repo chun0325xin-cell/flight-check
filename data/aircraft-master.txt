@@ -1,0 +1,194 @@
+
+SIGN IN
+CREATE A FREE ACCOUNT
+EXPLORE
+WIKI CONTENT
+COMMUNITY
+ 
+SIGN IN
+Home
+
+Explore
+Saved
+Progress
+
+History
+Utilities
+
+More
+SKIP TO CONTENT
+The Airline Simulator Wiki
+152
+PAGES
+EXPLORE
+WIKI CONTENT
+COMMUNITY
+in: Aircraft
+Aircraft
+Category page
+SAVE
+EDIT
+Aircraft List
+Welcome to the master list of aircraft available in ''The Airline Simulator: Build Your Dream Airline''.
+
+Below you'll find key aircraft currently featured in the game, with details on type, range, capacity, and use cases. As the game updates, this list will expand with new additions like the Boeing 777-9 and Airbus A330-800.
+
+Aircraft List
+Manufacturer	Family	Variant	ICAO Code	Range (km)	Max Seats	Base Price ($)	Unlock	Notes
+Airbus	A220	A220-100	BCS1	6,390	135	72,800k	Airbus A220	
+A220-300	BCS3	6,297	160	81,200k	
+A320	A318-100	A318	5,750	136	70,000k		
+A319-100	A319	6,950	156	81,840k	
+A320-200	A320	6,200	186	84,800k	
+A321-200	A321	5,950	230	90,640k	
+A320neo	A319neo	A19N	6,850	160	85,200k	Newer Engines	
+A320neo	A20N	6,300	194	91,480k	
+A321neo	A21N	6,480	244	101,000k	
+A321LR	A21N	7,400	244	106,000k	Flying Long Range	
+A321XLR	A21N	8,704	244	114,000k	
+A330	A330-200	A332	13,450	405	215,800k		
+A330-300	A333	11,750	440	225,000k	
+A330neo	A330-800	A338	15,000	406	248,000k	Airbus Widebodies	
+A330-900	A339	13,334	465	257,000k	
+A340	A340-300	A343	13,500	440	238,400k		
+A340-600	A346	14,450	477	261,000k	
+A350	A350-900	A359	15,750	440	288,000k	Airbus Widebodies	
+A350-900ULR	A359	17,964	264	295,000k	
+A350-1000	A35K	16,482	480	319,000k	
+A350-1000ULR	A35K	17,964	288	329,000k		
+A380	A380-800	A388	14,800	850	373,000k	King of the Skies	
+Boeing	717	717-200	B712	2,648	130	65,400k		
+737	737-700	B737	5,570	149	79,280k		
+737-800	B738	5,436	189	84,880k	
+737-900	B739	5,300	220	86,400k	
+737-900ER	B739	5,460	220	88,000k	
+737 MAX	737 MAX 7	B37M	7,000	172	88,100k	More MAX	
+737 MAX 8	B38M	6,500	189	91,800k	The MAX	
+737 MAX 8200	B38M	6,000	210	92,700k	
+737 MAX 9	B39M	6,100	220	94,700k	
+737 MAX 10	B3XM	5,700	230	96,000k	More MAX	
+747	747-400	B744	13,490	550	294,000k		
+747-400D	B744	4,500	660	283,000k	Domestic version of Boeing 747.
+747-8	B748	14,320	600	345,000k	Queen of the Skies	
+757	757-200	B752	7,205	246	102,400k		
+757-300	B753	6,295	294	121,000k	
+767	767-300ER	B763	11,370	350	193,000k		
+767-400ER	B764	10,415	378	213,000k	
+777	777-200	B772	9,700	440	262,000k		
+777-200ER	B772	13,080	440	271,000k
+777-200LR	B77L	15,843	440	285,000k	Triple Seven	
+777-300	B773	11,165	550	282,000k		
+777-300ER	B77W	13,649	550	315,000k	Triple Seven	
+777X	777-9	B779	13,500	570	361,000k	The Boeing 777X	
+787 Dreamliner	787-8 Dreamliner	B788	13,530	359	248,000k	The Dreamliner	
+787-9 Dreamliner	B789	14,010	406	263,000k	
+787-10 Dreamliner	B78X	11,730	441	276,000k	
+Bombardier	CRJ	CRJ-200	CRJ2	2,491	50	46,000k		
+CRJ-550	CRJ7	2,593	50	48,000k	
+CRJ-700	CRJ7	2,593	76	49,800k	
+CRJ-705	CRJ9	2,871	75	50,400k	
+CRJ-900	CRJ9	2,871	88	51,400k	
+CRJ-1000	CRJX	3,056	100	53,000k	
+Embraer	ERJ	ERJ-135	E135	3,243	37	45,000k		
+ERJ-140	E140	3,057	44	45,800k	
+ERJ-145	E145	2,873	50	46,500k	
+ERJ-145XR	E45X	3,057	50	47,400k	
+E-Jet	E170	E170	3,982	76	50,600k		
+E175	E175	3,982	88	53,000k	
+E175LR	E175	4,074	88	55,000k	
+E190	E190	4,537	112	55,400k	
+E195	E195	4,260	120	57,800k	
+E-Jet E2	E190-E2	E290	5,460	114	66,000k		
+E195-E2	E295	5,460	146	69,000k	
+ATR	ATR 42/72	ATR 42-600	AT46	1,345	48	41,800k		
+ATR 72-600	AT76	1,404	72	43,900k	
+De Havilland Canada	Dash 8	De Haviland Canada Dash 8 Q100	DH8A	1,889	40	40,100k		
+De Haviland Canada Dash 8 Q200	DH8B	2,084	40	41,900k	
+De Haviland Canada Dash 8 Q300	DH8C	1,711	56	43,200k
+De Haviland Canada Dash 8 Q400	DH8D	2,040	90	45,100k	
+Comac	ARJ-21	Comac ARJ-21-700	AJ27	3,700	90	51,000k		
+C919	Comac C919-100STD	C919	4,139	192	81,200k		
+Comac C919-100ER	C919	5,576	192	83,200k	
+How to Use This List
+
+Each aircraft will eventually link to its own page with:
+
+Full stats (range, capacity, fuel efficiency)
+Suggested route types
+Alliance/fleet usage examples
+Custom livery showcase (if available)
+Trending pages
+ A318-100
+A318-100
+All items (6)
+
+# A B C D E F G H I J K L M N O P Q R S T U V W X Y Z OTHER
+A
+A318-100
+A318-100
+A319-100
+A320-200
+Category:Aircraft
+Aircraft Efficiency Analysis
+F
+Fleet Strategy: A350 vs A380 Efficiency
+Categories
+Community content is available under CC-BY-SA unless otherwise noted.
+Recent Images
+NY Airways Boeing 777-300 in Excelsior 2026 Livery.png
+New York Airways
+4 days ago
+NY Airways Boeing 747-8 in Excelsior 2026 Livery.png
+New York Airways
+4 days ago
+NY Airways Boeing 777-300.png
+New York Airways
+4 days ago
+NY Airways Boeing 767-400ER.png
+New York Airways
+4 days ago
+
+ Fandom logo
+
+EXPLORE PROPERTIES
+
+Fandom
+Fanatical
+GameSpot
+Metacritic
+TV Guide
+Honest Entertainment
+FOLLOW US
+
+OVERVIEW
+
+What is Fandom?
+Essentials
+About
+Careers
+Press
+Contact
+Terms of Use
+Privacy Policy
+Digital Services Act
+Global Sitemap
+Local Sitemap
+Cookie Preferences
+COMMUNITY
+
+Community Central
+Support
+Help
+Accessibility Statement
+ADVERTISE
+
+Media Kit
+Contact
+FANDOM APPS
+
+Take your favorite fandoms with you and never miss a beat.
+Fandom App logo
+Store icon
+Store icon
+The Airline Simulator Wiki is a Fandom Games Community.
+VIEW MOBILE SITE

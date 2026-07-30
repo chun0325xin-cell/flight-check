@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Route Planning Lab — FlightCheck{% endblock %}
+{% block content %}
+<section class="page-hero planner-hero">
+  <div class="eyebrow"><span></span> Educational navigation workspace</div>
+  <h1>Plan the route.<br>Question the plan.</h1>
+  <p>Explore how course, wind, weather, time, and fuel interact. FlightCheck calculates an estimated wind correction and asks the questions a student pilot should verify next.</p>
+  <a class="button primary planner-hero-button" href="{{ url_for('ai_route_planner') }}">Let AI propose the route →</a>
+</section>
+<section class="planner-shell">
+  <aside class="planner-sidebar">
+    <div><span>01</span><strong>Route</strong><small>Airports & checkpoints</small></div>
+    <div><span>02</span><strong>Nav log</strong><small>Altitude & radio plan</small></div>
+    <div><span>03</span><strong>Aircraft</strong><small>Speed & fuel</small></div>
+    <div><span>04</span><strong>Weather</strong><small>Wind & conditions</small></div>
+    <div><span>05</span><strong>Brief</strong><small>Calculate & verify</small></div>
+    <p><b>Planning lab only.</b> All headings are true. Confirm magnetic variation, performance, legal reserves, and all operational data independently.</p>
+  </aside>
+  <form class="planner-form" method="post">
+    <section>
+      <div class="planner-section-title"><span>01</span><div><small>ROUTE</small><h2>Where are you going?</h2></div></div>
+      <div class="field-grid">
+        <label class="field">Departure airport<input name="departure" placeholder="KJFK" minlength="3" maxlength="4" required></label>
+        <label class="field">Destination airport<input name="destination" placeholder="KALB" minlength="3" maxlength="4" required></label>
+      </div>
+      <label class="field">Intermediate waypoint identifiers<input name="checkpoints" placeholder="GAYEL, IGN, CAM"><small>Enter airport, navaid, or fix identifiers in flight order, separated by commas. Each resolved point will appear on the map.</small></label>
+      <div class="field-grid">
+        <label class="field">True course (°)<input type="number" name="true_course" min="0" max="359" value="010" required></label>
+        <label class="field">Distance (nautical miles)<input type="number" name="distance" min="1" max="3000" step="0.1" value="120" required></label>
+      </div>
+    </section>
+    <section class="navlog-builder-section">
+      <div class="planner-section-title"><span>02</span><div><small>NAVIGATION LOG</small><h2>Plan each waypoint.</h2></div></div>
+      <p class="section-help">For every waypoint, enter the planned altitude and the facility/frequency you expect to monitor or contact. Verify every entry against current FAA charts, Chart Supplement, NOTAMs, clearances, and CFI guidance.</p>
+      <div class="navlog-editor">
+        <div class="navlog-editor-head"><span>Waypoint</span><span>Altitude MSL</span><span>ATC / CTAF / FSS facility</span><span>Frequency</span><span>Action or note</span></div>
+        <div id="navlog-rows"></div>
+      </div>
+      <div class="navlog-warning"><strong>Planning fields, not instructions.</strong> ATC may assign a different altitude, route, or frequency. Never use a saved entry instead of a current chart, clearance, or controller instruction.</div>
+    </section>
+    <section>
+      <div class="planner-section-title"><span>03</span><div><small>AIRCRAFT</small><h2>What are you flying?</h2></div></div>
+      <div class="field-grid three">
+        <label class="field">True airspeed (kt)<input type="number" name="true_airspeed" min="30" max="500" value="105" required></label>
+        <label class="field">Fuel burn (gal/hr)<input type="number" name="fuel_burn" min="1" max="100" step="0.1" value="8.5" required></label>
+        <label class="field">Planning reserve (min)<input type="number" name="reserve_minutes" min="0" max="300" value="60" required></label>
+      </div>
+    </section>
+    <section>
+      <div class="planner-section-title"><span>04</span><div><small>WEATHER</small><h2>What could change?</h2></div></div>
+      <div class="field-grid three">
+        <label class="field">Wind from (° true)<input type="number" name="wind_direction" min="0" max="359" value="300" required></label>
+        <label class="field">Wind speed (kt)<input type="number" name="wind_speed" min="0" max="200" value="18" required></label>
+        <label class="field">Temperature (°C)<input type="number" name="temperature" min="-80" max="60" value="15" required></label>
+        <label class="field">Route visibility (sm)<input type="number" name="route_visibility" min="0" max="100" step="0.1" value="10" required></label>
+        <label class="field">Lowest ceiling (ft AGL)<input type="number" name="ceiling" min="0" max="60000" value="5000" required></label>
+      </div>
+      <label class="field">Weather and terrain notes<input name="weather_notes" placeholder="Forecast changes, terrain, fronts, turbulence, icing concerns…"></label>
+    </section>
+    <div class="planner-submit">
+      <div><small>By continuing, I understand</small><p>This calculation is an educational estimate, not a navigation log, dispatch release, weather briefing, or flight plan.</p></div>
+      <button class="button primary" type="submit">Build planning brief <span>↗</span></button>
+    </div>
+  </form>
+</section>
+{% endblock %}

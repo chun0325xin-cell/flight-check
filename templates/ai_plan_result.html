@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set shown_plans = plans if plans is defined else [plan] %}
+{% block title %}AI Routes {{ plan.departure }} to {{ plan.destination }} — FlightCheck{% endblock %}
+{% block content %}
+<section class="route-result-hero ai-result-hero">
+  <div>
+    <div class="eyebrow"><span></span> AI route comparison</div>
+    <p>{{ plan.aircraft_type|upper }} · AUTOMATIC WAYPOINT & WEATHER REVIEW</p>
+    <h1>{{ plan.departure }} <i>→</i> {{ plan.destination }}</h1>
+    <div class="route-line"><b>LOWEST FUEL</b><span></span><b>FASTEST</b></div>
+  </div>
+  <a class="button primary" href="{{ url_for('ai_route_planner') }}">New comparison ↗</a>
+</section>
+
+<section class="route-comparison">
+  {% for route in shown_plans %}
+  <article class="comparison-card">
+    <header class="comparison-head">
+      <small>OPTION {{ loop.index }} · AI CANDIDATE #{{ route.id }}</small>
+      <h2>{{ "Lowest fuel" if route.optimization == "lowest_fuel" else "Fastest route" }}</h2>
+      <div class="route-line">{% for point in route.route_points %}<b>{{ point.id }}</b>{% if not loop.last %}<span></span>{% endif %}{% endfor %}</div>
+    </header>
+    <div class="comparison-metrics">
+      <div><small>DISTANCE</small><strong>{{ route.distance }} nm</strong></div>
+      <div><small>EST. TIME</small><strong>{{ route.ete_minutes }} min</strong></div>
+      <div><small>EST. FUEL</small><strong>{{ route.estimated_fuel }} gal</strong></div>
+    </div>
+    <div class="route-map" data-route-map="route-points-data-{{ loop.index }}" aria-label="{{ route.optimization }} route map"></div>
+    <ol class="waypoint-manifest">
+      {% for point in route.route_points %}
+      <li><span>{{ point.order }}</span><div><strong>{{ point.id }}</strong><small>{{ point.name }} · {{ point.type }}</small>
+        {% if point.altitude is not none %}<b>{{ "{:,}".format(point.altitude) }} ft MSL</b>{% else %}<b class="missing-cell">Altitude to verify</b>{% endif %}
+        <p>{{ point.action }}</p></div></li>
+      {% endfor %}
+    </ol>
+    <script id="route-points-data-{{ loop.index }}" type="application/json">{{ route.route_points|tojson }}</script>
+  </article>
+  {% endfor %}
+</section>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="{{ url_for('static', filename='js/route-map.js') }}"></script>
+<section class="briefing-grid ai-result-brief">
+  <article class="ai-brief-card">
+    <div class="ai-label"><span>AI</span><div><small>ROUTE DESIGNER</small><b>{{ plan.agent_source }}</b></div></div>
+    <h2>Two candidates. One decision to verify.</h2>
+    <p>{% for route in shown_plans %}<b>{{ "LOWEST FUEL" if route.optimization == "lowest_fuel" else "FASTEST" }}:</b> {{ route.summary }}
+
+{% endfor %}</p>
+  </article>
+  <article class="weather-card">
+    <div class="eyebrow"><span></span> Mandatory review</div><h2>Planning boundary</h2>
+    <ul class="warning-list">{% for warning in plan.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+    <div class="assistant-boundary">These are educational candidates, not dispatch releases, navigation instructions, clearances, or legal flight plans. Verify current official sources and qualified operational personnel.</div>
+  </article>
+</section>
+{% endblock %}

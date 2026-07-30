@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Aircraft Library — FlightCheck{% endblock %}
+{% block content %}
+<section class="aircraft-hero">
+  <div><div class="eyebrow"><span></span> COMPLETE GAME AIRCRAFT INDEX</div><h1>Explore the fleet.</h1><p>Every aircraft listed in The Airline Simulator master table, searchable by manufacturer, range, and operating category.</p></div>
+  <div class="aircraft-hero-code"><span>FC / TYPE INDEX</span><strong>{{ aircraft|length }}</strong><small>AIRCRAFT PROFILES</small></div>
+</section>
+<section class="aircraft-catalog">
+  <div class="aircraft-filter-bar" aria-label="Aircraft filters">
+    <label>Manufacturer<select id="filter-manufacturer"><option value="all">All manufacturers</option>{% for maker in aircraft|map(attribute="maker")|unique %}<option>{{ maker }}</option>{% endfor %}</select></label>
+    <label>Range<select id="filter-range"><option value="all">All ranges</option><option value="short">Short · under 1,500 nm</option><option value="medium">Medium · 1,500–4,000 nm</option><option value="long">Long · over 4,000 nm</option></select></label>
+    <label>Aircraft class<select id="filter-class"><option value="all">All classes</option><option value="widebody">Widebody</option><option value="narrowbody">Narrowbody</option><option value="regional">Regional</option></select></label>
+    <label class="aircraft-search">Search<input id="filter-search" type="search" placeholder="Aircraft, family, or ICAO code…"></label>
+    <button type="button" id="clear-aircraft-filters">Clear filters</button>
+  </div>
+  <div class="catalog-status"><span><b id="aircraft-count">{{ aircraft|length }}</b> aircraft shown</span><small>Game data reproduced from the supplied master list. Real-world performance varies by configuration, payload, and conditions.</small></div>
+  <div class="aircraft-grid" id="aircraft-grid">
+    {% for item in aircraft %}
+    <article class="aircraft-card" data-maker="{{ item.maker }}" data-range="{{ item.range_group }}" data-class="{{ item.class_group }}" data-name="{{ (item.name ~ ' ' ~ item.family ~ ' ' ~ item.icao)|lower }}">
+      <a class="aircraft-card-link" href="{{ url_for('aircraft_detail', slug=item.slug) }}" aria-label="View {{ item.name }} aircraft details">
+      <div class="aircraft-photo"><img src="{{ item.image }}" alt="{{ item.maker }} {{ item.name }} aircraft photograph" loading="lazy"><span>{{ "%02d"|format(loop.index) }}</span><i>Verified family / model photo</i></div>
+      <div class="aircraft-card-body">
+        <small>{{ item.maker|upper }} / {{ item.family|upper }}</small><h2>{{ item.name }}</h2><p>ICAO {{ item.icao }} · maximum game capacity {{ item.seats }} seats</p>
+        <dl><div><dt>Game range</dt><dd>{{ item.range_km }} km</dd></div><div><dt>Approx. nautical</dt><dd>{{ item.range_nm }} nm</dd></div><div><dt>Class</dt><dd>{{ item.class_name }}</dd></div><div><dt>Game base price</dt><dd>${{ item.price }}</dd></div></dl>
+      </div>
+      </a>
+      <a class="aircraft-photo-source" href="{{ item.image_source }}" target="_blank" rel="noopener" aria-label="Open photo source for {{ item.name }}">Photo source · Wikimedia Commons ↗</a>
+    </article>
+    {% endfor %}
+  </div>
+  <div class="aircraft-empty" id="aircraft-empty" hidden><strong>No aircraft match these filters.</strong><button type="button">Reset the catalog</button></div>
+  <p class="aircraft-source-note">Aircraft names, game range, capacity, price, and unlock structure come from the user-supplied <a href="https://the-airline-simulator.fandom.com/wiki/Category:Aircraft" target="_blank" rel="noopener">The Airline Simulator Wiki master list</a>, whose community text is offered under CC BY-SA. Photos are representative real-aircraft images served from Wikimedia Commons. Verify real-world specifications with manufacturers and approved aircraft documentation.</p>
+</section>
+{% endblock %}

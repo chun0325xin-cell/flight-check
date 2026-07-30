@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Assessment History — FlightCheck{% endblock %}
+{% block content %}
+<section class="page-hero">
+  <div class="eyebrow"><span></span> Persistent SQLite data</div>
+  <h1>Your briefing history.</h1>
+  <p>Compare recent risk pictures and notice patterns in the factors that influence your decisions.</p>
+</section>
+<section class="history-section">
+  <div class="history-heading"><div><small>RISK REVIEWS</small><h2>Saved PAVE assessments</h2></div><a href="{{ url_for('briefing') }}#assessment">New assessment →</a></div>
+  {% if assessments %}
+  <div class="history-list">
+    {% for item in assessments %}
+    <article class="history-card risk-{{ item.risk_level|lower }}">
+      <div class="history-score"><strong>{{ item.score }}</strong><small>/100</small></div>
+      <div class="history-main"><small>{{ item.created_at[:10] }} · ASSESSMENT #{{ item.id }}</small><h2>{{ item.flight_name }}</h2><p>{{ item.summary }}</p></div>
+      <span class="risk-pill">{{ item.risk_level }}</span>
+      <form action="{{ url_for('delete_assessment', assessment_id=item.id) }}" method="post" data-confirm-delete><button aria-label="Delete {{ item.flight_name }}">Delete</button></form>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><span>FC / 00</span><h2>No risk reviews yet.</h2><p>Your completed PAVE assessments will appear here.</p><a class="button primary" href="{{ url_for('briefing') }}#assessment">Run your first check →</a></div>
+  {% endif %}
+
+  <div class="history-heading route-history-heading"><div><small>ROUTE LAB</small><h2>Saved route plans</h2></div><a href="{{ url_for('route_planner') }}">New route plan →</a></div>
+  {% if route_plans %}
+  <div class="history-list">
+    {% for plan in route_plans %}
+    <article class="history-card route-history-card">
+      <div class="history-score"><strong>{{ plan.ete_minutes }}</strong><small>min</small></div>
+      <div class="history-main"><small>{{ plan.created_at[:10] }} · ROUTE #{{ plan.id }}</small><h2>{{ plan.departure }} → {{ plan.destination }}</h2><p>{{ plan.distance }} nm · heading {{ "%03.0f"|format(plan.heading) }}° true · {{ "%.0f"|format(plan.groundspeed) }} kt groundspeed · {{ plan.fuel_needed }} gal incl. reserve</p></div>
+      <span class="risk-pill">{{ plan.wind_speed }} kt wind</span>
+      <a class="view-plan-button" href="{{ url_for('saved_route_plan', plan_id=plan.id) }}">View plan →</a>
+      <form action="{{ url_for('delete_route_plan', plan_id=plan.id) }}" method="post" data-confirm-delete><button aria-label="Delete route {{ plan.departure }} to {{ plan.destination }}">Delete</button></form>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state route-empty"><span>FC / ROUTE</span><h2>No route plans yet.</h2><p>Your wind, time, and fuel planning exercises will appear here.</p><a class="button primary" href="{{ url_for('route_planner') }}">Plan a route →</a></div>
+  {% endif %}
+
+  <div class="history-heading route-history-heading"><div><small>AI ROUTE DESIGNER</small><h2>Saved AI candidates</h2></div><a href="{{ url_for('ai_route_planner') }}">Generate candidate →</a></div>
+  {% if ai_route_plans %}
+  <div class="history-list">
+    {% for plan in ai_route_plans %}
+    <article class="history-card route-history-card">
+      <div class="history-score"><strong>{{ plan.ete_minutes }}</strong><small>min</small></div>
+      <div class="history-main"><small>{{ plan.created_at[:10] }} · AI ROUTE #{{ plan.id }}</small><h2>{{ plan.departure }} → {{ plan.destination }}</h2><p>{{ plan.aircraft_type }} · {{ plan.distance }} nm · {{ plan.estimated_fuel }} gal estimated · {{ plan.optimization|replace("_", " ") }}</p></div>
+      <span class="risk-pill">AI candidate</span>
+      <a class="view-plan-button" href="{{ url_for('saved_ai_route_plan', plan_id=plan.id) }}">View plan →</a>
+      <form action="{{ url_for('delete_ai_route_plan', plan_id=plan.id) }}" method="post" data-confirm-delete><button aria-label="Delete AI route {{ plan.departure }} to {{ plan.destination }}">Delete</button></form>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state route-empty"><span>FC / AI</span><h2>No AI route candidates yet.</h2><p>Generated waypoint and altitude candidates will be saved here.</p><a class="button primary" href="{{ url_for('ai_route_planner') }}">Try AI route designer →</a></div>
+  {% endif %}
+</section>
+{% endblock %}

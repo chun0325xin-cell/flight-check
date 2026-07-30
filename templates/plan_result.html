@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ plan.departure }} to {{ plan.destination }} — FlightCheck{% endblock %}
+{% block content %}
+<section class="route-result-hero">
+  <div>
+    <div class="eyebrow"><span></span> Route plan #{{ plan_id }} · educational estimate</div>
+    <p>DEPARTURE</p><h1>{{ plan.departure }} <i>→</i> {{ plan.destination }}</h1>
+    <div class="route-line"><b>{{ plan.departure }}</b><span></span>{% if plan.checkpoints %}<small>{{ plan.checkpoints }}</small><span></span>{% endif %}<b>{{ plan.destination }}</b></div>
+  </div>
+  <a class="button primary" href="{{ url_for('route_planner') }}">Revise plan ↗</a>
+</section>
+<section class="route-map-section">
+  <div class="map-heading">
+    <div><div class="eyebrow"><span></span> Route visualization</div><h2>Every waypoint, in order.</h2><p>Markers are numbered from departure to destination. Click any marker to inspect its identifier, type, and coordinates.</p></div>
+    <div class="map-source"><span>DATA SOURCE</span><strong>AviationWeather.gov</strong><small>Airport, station, navaid, and fix coordinates</small></div>
+  </div>
+  {% if route_points|length >= 2 %}
+    <div class="route-map-layout">
+      <div id="route-map" class="route-map" aria-label="Map showing the planned route and every resolved waypoint"></div>
+      <ol class="waypoint-manifest">
+        {% for point in route_points %}
+        <li><span>{{ point.order }}</span><div><strong>{{ point.id }}</strong><small>{{ point.name }} · {{ point.type }}</small><code>{{ "%.4f"|format(point.lat) }}, {{ "%.4f"|format(point.lon) }}</code></div></li>
+        {% endfor %}
+      </ol>
+    </div>
+    <script id="route-points-data" type="application/json">{{ route_points|tojson }}</script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer src="{{ url_for('static', filename='js/route-map.js') }}"></script>
+  {% else %}
+    <div class="map-empty"><strong>The map needs at least two resolved waypoint identifiers.</strong><p>Check the airport and waypoint codes, then revise the plan. The route calculation remains available below.</p></div>
+  {% endif %}
+  {% if unresolved_waypoints %}
+    <div class="unresolved-waypoints"><strong>Not shown on map:</strong> {{ unresolved_waypoints|join(", ") }} <span>— verify these identifiers or replace them with supported airport, navaid, or fix codes.</span></div>
+  {% endif %}
+  <p class="map-disclaimer">For educational visualization only. Do not use this map for navigation, airspace clearance, terrain avoidance, or chart replacement.</p>
+</section>
+<section class="navlog-result-section">
+  <div class="map-heading">
+    <div><div class="eyebrow"><span></span> Navigation log</div><h2>Waypoint-by-waypoint checklist.</h2><p>Use this as a briefing worksheet. Blank fields mean that an altitude, facility, or frequency still needs to be researched and verified.</p></div>
+    <div class="map-source"><span>STATUS</span><strong>Student-planned</strong><small>Not an ATC clearance or navigation chart</small></div>
+  </div>
+  <div class="navlog-table-wrap">
+    <table class="navlog-table">
+      <thead><tr><th>#</th><th>Waypoint</th><th>Planned altitude</th><th>Contact / monitor</th><th>Frequency</th><th>Action / note</th><th>Verify</th></tr></thead>
+      <tbody>
+      {% for leg in navlog %}
+        <tr>
+          <td>{{ leg.order }}</td>
+          <td><strong>{{ leg.waypoint }}</strong></td>
+          <td>{% if leg.altitude is not none %}{{ "{:,}".format(leg.altitude) }} ft MSL{% else %}<span class="missing-cell">Not entered</span>{% endif %}</td>
+          <td>{% if leg.facility %}{{ leg.facility }}{% else %}<span class="missing-cell">Research needed</span>{% endif %}</td>
+          <td>{% if leg.frequency %}<code>{{ leg.frequency }}</code>{% else %}<span class="missing-cell">—</span>{% endif %}</td>
+          <td>{% if leg.notes %}{{ leg.notes }}{% else %}<span class="missing-cell">—</span>{% endif %}</td>
+          <td><span class="verify-box" aria-label="Unchecked verification box"></span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="map-disclaimer">Verify altitudes for terrain, obstacles, airspace, weather, aircraft performance, regulations, and any ATC clearance. Verify frequencies from current FAA publications.</p>
+</section>
+<section class="flight-metrics">
+  <div><small>Estimated true heading</small><strong>{{ "%03.0f"|format(plan.heading) }}°</strong><span>WCA {{ "%+.1f"|format(plan.correction) }}°</span></div>
+  <div><small>Estimated groundspeed</small><strong>{{ "%.0f"|format(plan.groundspeed) }} <i>kt</i></strong><span>TAS {{ "%.0f"|format(plan.true_airspeed) }} kt</span></div>
+  <div><small>Estimated time en route</small><strong>{{ plan.ete_minutes }} <i>min</i></strong><span>{{ plan.distance }} nautical miles</span></div>
+  <div><small>Fuel incl. entered reserve</small><strong>{{ plan.fuel_needed }} <i>gal</i></strong><span>{{ plan.reserve_minutes }}-minute reserve</span></div>
+</section>
+<section class="briefing-grid">
+  <article class="ai-brief-card">
+    <div class="ai-label"><span>AI</span><div><small>FLIGHTCHECK PLANNING ASSISTANT</small><b>{{ assistant_source }}</b></div></div>
+    <h2>Questions before conclusions.</h2>
+    <p>{{ assistant_brief }}</p>
+    <div class="assistant-boundary">The assistant cannot see complete or guaranteed-current flight information and cannot choose the “best” or safest route.</div>
+  </article>
+  <article class="weather-card">
+    <div class="eyebrow"><span></span> Weather snapshot</div>
+    <h2>Entered conditions</h2>
+    <dl><div><dt>Wind</dt><dd>{{ "%03.0f"|format(plan.wind_direction) }}° / {{ plan.wind_speed }} kt</dd></div><div><dt>Visibility</dt><dd>{{ plan.visibility }} sm</dd></div><div><dt>Ceiling</dt><dd>{{ plan.ceiling }} ft AGL</dd></div><div><dt>Temperature</dt><dd>{{ plan.temperature }}°C</dd></div></dl>
+    {% if metars %}
+      <h3>Latest retrieved METAR observations</h3>
+      {% for metar in metars %}<code>{{ metar.rawOb or metar.raw_text or metar }}</code>{% endfor %}
+      <small class="source-note">Source: AviationWeather.gov public data API. Retrieval is informational and not a complete official briefing.</small>
+    {% else %}
+      <div class="weather-unavailable">Live METAR observations were unavailable. Continue with an official briefing source.</div>
+    {% endif %}
+  </article>
+</section>
+<section class="verify-strip">
+  <div><span>01</span><strong>Weather</strong><p>METARs, TAFs, radar, PIREPs, AIRMETs/SIGMETs, winds aloft.</p></div>
+  <div><span>02</span><strong>Route</strong><p>Airspace, terrain, checkpoints, alternates, NOTAMs, TFRs.</p></div>
+  <div><span>03</span><strong>Aircraft</strong><p>POH performance, weight and balance, fuel, runway needs.</p></div>
+  <div><span>04</span><strong>People</strong><p>Personal minimums, passengers, pressure, CFI review.</p></div>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}About — FlightCheck{% endblock %}
+{% block content %}
+<section class="page-hero about-hero">
+  <div class="eyebrow"><span></span> Built by a student pilot</div>
+  <h1>Better decisions begin<br>before the engine starts.</h1>
+  <p>FlightCheck is a full-stack educational project that makes a familiar aeronautical decision-making framework easier to practice and revisit.</p>
+</section>
+<section class="about-grid">
+  <article><span>01</span><small>The framework</small><h2>PAVE, made interactive.</h2><p>The assessment groups inputs into Pilot, Aircraft, enVironment, and External pressures. It looks for individual concerns and combinations that deserve deliberate mitigation.</p></article>
+  <article><span>02</span><small>The technology</small><h2>Simple, durable architecture.</h2><p>Python and Flask handle routing and assessment logic. A meaningful POST request processes the briefing, while SQLite preserves assessment history across restarts.</p></article>
+  <article><span>03</span><small>The boundary</small><h2>Education—not operational advice.</h2><p>The score is intentionally an awareness prompt, not a legal minimum or go/no-go determination. Pilots must use official data and exercise PIC responsibility.</p></article>
+</section>
+<section class="builder-note"><div><small>Project purpose</small><h2>Aviation meets computer science.</h2></div><p>This project demonstrates full-stack development through a real concern in general aviation: recognizing how ordinary risk factors can accumulate. The goal is to encourage reflection, discussion, and conservative decision-making.</p></section>
+{% endblock %}
