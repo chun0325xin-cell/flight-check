@@ -199,6 +199,9 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Generate both routes", response.data)
         self.assertNotIn(b'name="checkpoints"', response.data)
         self.assertNotIn(b'name="payload_weight"', response.data)
+        self.assertIn(b"John F. Kennedy International Airport (KJFK)", response.data)
+        self.assertIn(b'name="departure"', response.data)
+        self.assertIn(b'name="destination"', response.data)
 
     def test_ai_route_designer_validates_calculates_and_saves(self):
         points = [

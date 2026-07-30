@@ -16,8 +16,8 @@
     <section>
       <div class="planner-section-title"><span>01</span><div><small data-i18n="mission">MISSION</small><h2 data-i18n="where_fly">Where will you fly?</h2></div></div>
       <div class="field-grid">
-        <label class="field"><span data-i18n="departure">Departure airport</span><input name="departure" placeholder="KJFK" minlength="3" maxlength="4" required></label>
-        <label class="field"><span data-i18n="arrival">Arrival airport</span><input name="destination" placeholder="KALB" minlength="3" maxlength="4" required></label>
+        <label class="field"><span data-i18n="departure">Departure airport</span><select name="departure" required><option value="">Choose departure airport</option>{% for code, name in airports %}<option value="{{ code }}">{{ name }} ({{ code }})</option>{% endfor %}</select></label>
+        <label class="field"><span data-i18n="arrival">Arrival airport</span><select name="destination" required><option value="">Choose arrival airport</option>{% for code, name in airports %}<option value="{{ code }}">{{ name }} ({{ code }})</option>{% endfor %}</select></label>
       </div>
     </section>
     <section>

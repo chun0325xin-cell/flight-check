@@ -18,6 +18,61 @@ BASE_DIR = Path(__file__).resolve().parent
 DATABASE = Path(os.environ.get("FLIGHTCHECK_DATABASE", BASE_DIR / "instance" / "flightcheck.db"))
 AIRCRAFT_SOURCE = BASE_DIR / "data" / "aircraft-master.txt"
 FAA_AIRCRAFT_SOURCE = BASE_DIR / "data" / "faa-aircraft.json"
+US_AIRPORTS = [
+    ("KATL", "Hartsfield–Jackson Atlanta International Airport"),
+    ("KAUS", "Austin–Bergstrom International Airport"),
+    ("KBDL", "Bradley International Airport"),
+    ("KBNA", "Nashville International Airport"),
+    ("KBOS", "Boston Logan International Airport"),
+    ("KBWI", "Baltimore/Washington International Thurgood Marshall Airport"),
+    ("KCLE", "Cleveland Hopkins International Airport"),
+    ("KCLT", "Charlotte Douglas International Airport"),
+    ("KCVG", "Cincinnati/Northern Kentucky International Airport"),
+    ("KDCA", "Ronald Reagan Washington National Airport"),
+    ("KDEN", "Denver International Airport"),
+    ("KDFW", "Dallas Fort Worth International Airport"),
+    ("KDTW", "Detroit Metropolitan Wayne County Airport"),
+    ("KEWR", "Newark Liberty International Airport"),
+    ("KFLL", "Fort Lauderdale–Hollywood International Airport"),
+    ("KHNL", "Daniel K. Inouye International Airport"),
+    ("KIAD", "Washington Dulles International Airport"),
+    ("KIAH", "George Bush Intercontinental Airport"),
+    ("KIND", "Indianapolis International Airport"),
+    ("KJFK", "John F. Kennedy International Airport"),
+    ("KLAS", "Harry Reid International Airport"),
+    ("KLAX", "Los Angeles International Airport"),
+    ("KLGA", "LaGuardia Airport"),
+    ("KMCI", "Kansas City International Airport"),
+    ("KMCO", "Orlando International Airport"),
+    ("KMDW", "Chicago Midway International Airport"),
+    ("KMEM", "Memphis International Airport"),
+    ("KMIA", "Miami International Airport"),
+    ("KMKE", "Milwaukee Mitchell International Airport"),
+    ("KMSP", "Minneapolis–Saint Paul International Airport"),
+    ("KMSY", "Louis Armstrong New Orleans International Airport"),
+    ("KOAK", "San Francisco Bay Oakland International Airport"),
+    ("KORD", "Chicago O'Hare International Airport"),
+    ("KPDX", "Portland International Airport"),
+    ("KPHL", "Philadelphia International Airport"),
+    ("KPHX", "Phoenix Sky Harbor International Airport"),
+    ("KPIT", "Pittsburgh International Airport"),
+    ("KRDU", "Raleigh–Durham International Airport"),
+    ("KSAN", "San Diego International Airport"),
+    ("KSAT", "San Antonio International Airport"),
+    ("KSEA", "Seattle–Tacoma International Airport"),
+    ("KSFO", "San Francisco International Airport"),
+    ("KSJC", "Norman Y. Mineta San José International Airport"),
+    ("KSLC", "Salt Lake City International Airport"),
+    ("KSMF", "Sacramento International Airport"),
+    ("KSNA", "John Wayne Airport"),
+    ("KSTL", "St. Louis Lambert International Airport"),
+    ("KTPA", "Tampa International Airport"),
+    ("KALB", "Albany International Airport"),
+    ("KHPN", "Westchester County Airport"),
+    ("KISP", "Long Island MacArthur Airport"),
+    ("KTEB", "Teterboro Airport"),
+    ("KTTN", "Trenton–Mercer Airport"),
+]
 
 app = Flask(__name__)
 app.config.update(
@@ -915,12 +970,17 @@ def route_planner():
 @app.route("/ai-plan", methods=["GET", "POST"])
 def ai_route_planner():
     if request.method == "GET":
-        return render_template("ai_planner.html", aircraft=load_aircraft_catalog())
+        return render_template("ai_planner.html", aircraft=load_aircraft_catalog(), airports=US_AIRPORTS)
     try:
         departure = request.form.get("departure", "").strip().upper()[:4]
         destination = request.form.get("destination", "").strip().upper()[:4]
         if not (3 <= len(departure) <= 4 and departure.isalnum() and 3 <= len(destination) <= 4 and destination.isalnum()):
             raise ValueError("Enter valid three- or four-character airport identifiers.")
+        valid_airports = {code for code, _name in US_AIRPORTS}
+        if departure not in valid_airports or destination not in valid_airports:
+            raise ValueError("Choose both airports from the provided list.")
+        if departure == destination:
+            raise ValueError("Departure and arrival airports must be different.")
         selected_maker = request.form.get("aircraft_manufacturer", "").strip()
         selected_family = request.form.get("aircraft_family", "").strip()
         selected_type = request.form.get("aircraft_type", "").strip()
