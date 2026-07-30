@@ -200,7 +200,10 @@ class FlightCheckTests(unittest.TestCase):
     def test_old_route_page_opens_simplified_ai_planner(self):
         response = self.client.get("/plan", follow_redirects=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Generate both routes", response.data)
+        self.assertIn(b"Compare both", response.data)
+        self.assertIn(b'value="lowest_fuel"', response.data)
+        self.assertIn(b'value="fastest"', response.data)
+        self.assertIn(b'value="both"', response.data)
         self.assertNotIn(b'name="checkpoints"', response.data)
         self.assertNotIn(b'name="payload_weight"', response.data)
         self.assertIn(b"Search 5,900+ airports worldwide", response.data)
@@ -306,6 +309,53 @@ class FlightCheckTests(unittest.TestCase):
         saved = self.client.get("/ai-plan/1")
         self.assertEqual(saved.status_code, 200)
         self.assertIn(b"GAYEL", saved.data)
+
+    def test_ai_route_designer_can_generate_fastest_only(self):
+        fastest = {
+            "optimization": "fastest",
+            "summary": "Fastest candidate.",
+            "rationale": "Shortest estimated airborne time.",
+            "waypoints": [
+                {"id": "KJFK", "altitude_ft": None, "action": "Departure"},
+                {"id": "CAM", "altitude_ft": 25000, "action": "Cruise"},
+                {"id": "KALB", "altitude_ft": None, "action": "Arrival"},
+            ],
+            "warnings": [],
+        }
+        lowest_fuel = {
+            **fastest,
+            "optimization": "lowest_fuel",
+            "summary": "Fuel candidate.",
+            "waypoints": [
+                {"id": "KJFK", "altitude_ft": None, "action": "Departure"},
+                {"id": "GAYEL", "altitude_ft": 23000, "action": "Cruise"},
+                {"id": "KALB", "altitude_ft": None, "action": "Arrival"},
+            ],
+        }
+        points = [
+            {"id": "KJFK", "name": "John F Kennedy", "lat": 40.6413, "lon": -73.7781, "type": "Airport", "order": 1},
+            {"id": "KALB", "name": "Albany", "lat": 42.7483, "lon": -73.8017, "type": "Airport", "order": 2},
+        ]
+        with patch(
+            "app.generate_ai_route_comparison", return_value=([lowest_fuel, fastest], "Test AI")
+        ), patch("app.resolve_route_points", return_value=(points, [])):
+            response = self.client.post("/ai-plan", data={
+                "departure": "KJFK",
+                "destination": "KALB",
+                "aircraft_manufacturer": "Boeing",
+                "aircraft_family": "787 Dreamliner",
+                "aircraft_type": "787-9 Dreamliner",
+                "route_mode": "fastest",
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Fastest route", response.data)
+        self.assertIn(b"Fastest candidate.", response.data)
+        self.assertNotIn(b"Fuel candidate.", response.data)
+        with flightcheck.app.app_context():
+            saved = flightcheck.get_db().execute(
+                "SELECT optimization FROM ai_route_plans"
+            ).fetchall()
+        self.assertEqual([row["optimization"] for row in saved], ["fastest"])
 
 
 if __name__ == "__main__":

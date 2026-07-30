@@ -1251,6 +1251,9 @@ def ai_route_planner():
             raise ValueError("Choose both airports from the provided list.")
         if departure == destination:
             raise ValueError("Departure and arrival airports must be different.")
+        route_mode = request.form.get("route_mode", "both").strip()
+        if route_mode not in {"lowest_fuel", "fastest", "both"}:
+            raise ValueError("Choose lowest fuel, fastest, or compare both.")
         selected_maker = request.form.get("aircraft_manufacturer", "").strip()
         selected_family = request.form.get("aircraft_family", "").strip()
         selected_type = request.form.get("aircraft_type", "").strip()
@@ -1272,6 +1275,7 @@ def ai_route_planner():
             "aircraft_manufacturer": selected_maker,
             "aircraft_family": selected_family,
             "aircraft_type": selected_type,
+            "route_mode": route_mode,
             "empty_weight": 0, "payload_weight": payload_weight, "fuel_gallons": 0,
             "max_gross_weight": max_gross_weight, "cruise_speed": cruise_speed,
             "fuel_burn": fuel_burn, "reserve_minutes": 45, "loaded_weight": payload_weight,
@@ -1294,8 +1298,22 @@ def ai_route_planner():
     if len(route_signatures) == 2 and route_signatures[0] == route_signatures[1]:
         candidates[1] = local_fallback_routes(data)[1]
         agent_source += " · alternate route differentiated locally"
+    candidates_by_optimization = {
+        candidate.get("optimization"): candidate for candidate in candidates
+        if isinstance(candidate, dict)
+    }
+    selected_optimizations = (
+        ("lowest_fuel", "fastest") if route_mode == "both" else (route_mode,)
+    )
     plans = []
-    for optimization, candidate in zip(("lowest_fuel", "fastest"), candidates):
+    for optimization in selected_optimizations:
+        candidate = candidates_by_optimization.get(optimization)
+        if candidate is None:
+            candidate = next(
+                route for route in local_fallback_routes(data)
+                if route["optimization"] == optimization
+            )
+            agent_source += f" · {optimization} fallback"
         route_input = {**data, "optimization": optimization}
         submitted = candidate.get("waypoints", [])
         identifiers = [str(item.get("id", "")).strip().upper() for item in submitted

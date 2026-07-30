@@ -31,12 +31,16 @@
       <script id="aircraft-selector-data" type="application/json">{{ aircraft|tojson }}</script>
     </section>
     <section>
-      <div class="planner-section-title"><span>03</span><div><small>AI COMPARISON</small><h2>Get both routes automatically.</h2></div></div>
-      <div class="dual-route-preview"><div><b>Lowest fuel</b><small>AI proposes the route, waypoints and altitude profile.</small></div><div><b>Fastest</b><small>Current endpoint METARs and TAFs are retrieved automatically for context.</small></div></div>
+      <div class="planner-section-title"><span>03</span><div><small>ROUTE OBJECTIVE</small><h2>Choose one route or compare both.</h2></div></div>
+      <div class="optimization-grid route-mode-grid">
+        <label><input type="radio" name="route_mode" value="lowest_fuel"><span><b>Lowest fuel only</b><small>Prioritize estimated fuel use using distance and forecast wind effects.</small></span></label>
+        <label><input type="radio" name="route_mode" value="fastest"><span><b>Fastest only</b><small>Prioritize estimated airborne time using route distance and forecast winds.</small></span></label>
+        <label><input type="radio" name="route_mode" value="both" checked><span><b>Compare both</b><small>Generate both candidates side by side so you can review the tradeoff.</small></span></label>
+      </div>
     </section>
     <div class="planner-submit">
       <div><small>Educational boundary</small><p>The generated route and altitudes are questions to verify—not navigation instructions, a clearance, or a legal flight plan.</p></div>
-      <button class="button primary" type="submit" id="ai-route-submit"><i>Generate both routes</i> <span>↗</span></button>
+      <button class="button primary" type="submit" id="ai-route-submit"><i>Generate selected route</i> <span>↗</span></button>
     </div>
   </form>
 </section>

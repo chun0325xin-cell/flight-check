@@ -4,15 +4,19 @@
 {% block content %}
 <section class="route-result-hero ai-result-hero">
   <div>
-    <div class="eyebrow"><span></span> AI route comparison</div>
+    <div class="eyebrow"><span></span> {{ "AI route comparison" if shown_plans|length > 1 else "AI route candidate" }}</div>
     <p>{{ plan.aircraft_type|upper }} · AUTOMATIC WAYPOINT & WEATHER REVIEW</p>
     <h1>{{ plan.departure }} <i>→</i> {{ plan.destination }}</h1>
+    {% if shown_plans|length > 1 %}
     <div class="route-line"><b>LOWEST FUEL</b><span></span><b>FASTEST</b></div>
+    {% else %}
+    <div class="route-line"><b>{{ "LOWEST FUEL" if plan.optimization == "lowest_fuel" else "FASTEST" }}</b></div>
+    {% endif %}
   </div>
   <a class="button primary" href="{{ url_for('ai_route_planner') }}">New comparison ↗</a>
 </section>
 
-<section class="route-comparison">
+<section class="route-comparison{% if shown_plans|length == 1 %} single-route{% endif %}">
   {% for route in shown_plans %}
   <article class="comparison-card">
     <header class="comparison-head">
@@ -50,7 +54,7 @@
 <section class="briefing-grid ai-result-brief">
   <article class="ai-brief-card">
     <div class="ai-label"><span>AI</span><div><small>ROUTE DESIGNER</small><b>{{ plan.agent_source }}</b></div></div>
-    <h2>Two candidates. One decision to verify.</h2>
+    <h2>{{ "Two candidates. One decision to verify." if shown_plans|length > 1 else "One candidate. Every detail to verify." }}</h2>
     <p>{% for route in shown_plans %}<b>{{ "LOWEST FUEL" if route.optimization == "lowest_fuel" else "FASTEST" }}:</b> {{ route.summary }}
 
 {% endfor %}</p>

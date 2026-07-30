@@ -372,8 +372,12 @@ if (aiRouteForm) {
     }
     const submit = document.querySelector("#ai-route-submit");
     if (!submit) return;
+    const selectedMode = aiRouteForm.querySelector('input[name="route_mode"]:checked')?.value || "both";
+    const loadingCopy = selectedMode === "both"
+      ? "Generating both routes… about 30 seconds"
+      : `Generating ${selectedMode === "fastest" ? "fastest" : "lowest-fuel"} route… about 30 seconds`;
     submit.disabled = true;
     submit.classList.add("is-loading");
-    submit.innerHTML = "<i>Generating both routes… about 30 seconds</i><span>◌</span>";
+    submit.innerHTML = `<i>${loadingCopy}</i><span>◌</span>`;
   });
 }
