@@ -285,7 +285,7 @@ if (routeAircraftData) {
 
   makerSelect.addEventListener("change", () => {
     const families = [...new Set(
-      aircraftOptions.filter((item) => item.maker === makerSelect.value).map((item) => item.family)
+      aircraftOptions.filter((item) => item.maker === makerSelect.value).map((item) => item.selector_family)
     )].sort();
     replaceOptions(familySelect, "Choose family", families);
     replaceOptions(modelSelect, "Choose model", []);
@@ -293,7 +293,7 @@ if (routeAircraftData) {
 
   familySelect.addEventListener("change", () => {
     const models = aircraftOptions
-      .filter((item) => item.maker === makerSelect.value && item.family === familySelect.value)
+      .filter((item) => item.maker === makerSelect.value && item.selector_family === familySelect.value)
       .map((item) => item.name);
     replaceOptions(modelSelect, "Choose model", models);
   });

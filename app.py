@@ -758,6 +758,12 @@ def load_aircraft_catalog() -> list[dict]:
             "name": variant,
             "maker": current_maker,
             "family": current_family,
+            "selector_family": {
+                ("Airbus", "A320"): "A320 series",
+                ("Airbus", "A320neo"): "A320 series",
+                ("Airbus", "A330"): "A330 series",
+                ("Airbus", "A330neo"): "A330 series",
+            }.get((current_maker, current_family), current_family),
             "icao": icao,
             "range_km": f"{range_km:,}",
             "range_nm": f"{round(range_km / 1.852):,}",
@@ -1031,7 +1037,7 @@ def ai_route_planner():
         selected_family = request.form.get("aircraft_family", "").strip()
         selected_type = request.form.get("aircraft_type", "").strip()
         selected_aircraft = next((item for item in load_aircraft_catalog() if
-            (item["maker"], item["family"], item["name"]) ==
+            (item["maker"], item["selector_family"], item["name"]) ==
             (selected_maker, selected_family, selected_type)), None)
         if selected_aircraft is None:
             raise ValueError("Choose a manufacturer, aircraft family, and specific model from the list.")

@@ -72,6 +72,10 @@ class FlightCheckTests(unittest.TestCase):
 
     def test_airbus_families_do_not_share_the_wrong_photo(self):
         aircraft = {item["name"]: item for item in flightcheck.load_aircraft_catalog()}
+        self.assertEqual(aircraft["A320-200"]["selector_family"], "A320 series")
+        self.assertEqual(aircraft["A320neo"]["selector_family"], "A320 series")
+        self.assertEqual(aircraft["A330-300"]["selector_family"], "A330 series")
+        self.assertEqual(aircraft["A330-900"]["selector_family"], "A330 series")
         compared = ["A220-100", "A220-300", "A320-200", "A320neo", "A330-200", "A340-300", "A350-900"]
         photos = [aircraft[name]["image"] for name in compared]
         self.assertEqual(len(photos), len(set(photos)))
