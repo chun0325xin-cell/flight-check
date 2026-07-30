@@ -48,6 +48,7 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Start briefing", response.data)
         self.assertIn(b"images/pilotbrief-logo.png", response.data)
         self.assertIn(b'class="header-logo"', response.data)
+        self.assertIn(b'class="button landing-secondary landing-tips-button"', response.data)
 
     def test_briefing_page_contains_assessment(self):
         response = self.client.get("/briefing")
