@@ -215,6 +215,12 @@ class FlightCheckTests(unittest.TestCase):
         self.assertEqual(payload["airports"][0]["code"], "EGLL")
         self.assertEqual(payload["airports"][0]["iata"], "LHR")
 
+    def test_global_airports_include_field_elevations(self):
+        airports = flightcheck.global_airports_by_code()
+        self.assertEqual(airports["KJFK"]["elevation_ft"], 13)
+        self.assertEqual(airports["EGLL"]["elevation_ft"], 83)
+        self.assertEqual(airports["KDEN"]["elevation_ft"], 5431)
+
     def test_fallback_routes_include_real_navaids_and_altitudes(self):
         routes = flightcheck.local_fallback_routes({
             "departure": "KJFK",
@@ -292,6 +298,8 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Lower fuel explanation.", response.data)
         self.assertIn(b"GAYEL", response.data)
         self.assertIn(b"5,500 ft MSL", response.data)
+        self.assertIn(b"Field elevation 13 ft MSL", response.data)
+        self.assertIn(b"Airport elevation source", response.data)
         history = self.client.get("/history")
         self.assertIn(b"Saved AI candidates", history.data)
         self.assertIn(b"787-9 Dreamliner", history.data)

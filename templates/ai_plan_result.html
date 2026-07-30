@@ -33,7 +33,8 @@
     <ol class="waypoint-manifest">
       {% for point in route.route_points %}
       <li><span>{{ point.order }}</span><div><strong>{{ point.id }}</strong><small>{{ point.name }} · {{ point.type }}</small>
-        {% if point.altitude is not none %}<b>{{ "{:,}".format(point.altitude) }} ft MSL</b>{% else %}<b class="missing-cell">Altitude to verify</b>{% endif %}
+        {% if point.elevation_ft is defined and point.elevation_ft is not none %}<b>Field elevation {{ "{:,}".format(point.elevation_ft) }} ft MSL</b><small>Airport elevation source · OurAirports</small>{% endif %}
+        {% if point.altitude is not none %}<b>Target altitude {{ "{:,}".format(point.altitude) }} ft MSL</b>{% elif point.elevation_ft is not defined or point.elevation_ft is none %}<b class="missing-cell">Altitude to verify</b>{% endif %}
         {% if point.forecast_wind %}<small>Forecast wind {{ point.forecast_wind }}</small>{% endif %}
         <p>{{ point.action }}</p></div></li>
       {% endfor %}

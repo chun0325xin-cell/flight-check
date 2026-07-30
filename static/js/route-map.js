@@ -100,7 +100,9 @@ function initializeRouteMap() {
     });
     const altitudeLabel = point.altitude
       ? `${Number(point.altitude).toLocaleString()} ft`
-      : "ALT TBD";
+      : (point.elevation_ft !== null && point.elevation_ft !== undefined
+        ? `FIELD ${Number(point.elevation_ft).toLocaleString()} ft`
+        : "ALT TBD");
     window.L.marker([point.lat, displayPoints[pointIndex].lon], { icon })
       .addTo(map)
       .bindTooltip(
@@ -108,7 +110,7 @@ function initializeRouteMap() {
         { permanent: true, direction: "top", offset: [0, -15], className: "flight-waypoint-label" }
       )
       .bindPopup(
-        `<div class="map-popup"><small>WAYPOINT ${escapeMapText(point.order)}</small><strong>${escapeMapText(point.id)}</strong><span>${escapeMapText(point.name)}</span>${point.altitude ? `<b>${Number(point.altitude).toLocaleString()} ft MSL</b>` : ""}${point.forecast_wind ? `<em>Forecast wind · ${escapeMapText(point.forecast_wind)}</em>` : ""}${point.facility ? `<em>${escapeMapText(point.facility)}${point.frequency ? ` · ${escapeMapText(point.frequency)}` : ""}</em>` : ""}<code>${Number(point.lat).toFixed(4)}, ${Number(point.lon).toFixed(4)}</code></div>`
+        `<div class="map-popup"><small>WAYPOINT ${escapeMapText(point.order)}</small><strong>${escapeMapText(point.id)}</strong><span>${escapeMapText(point.name)}</span>${point.elevation_ft !== null && point.elevation_ft !== undefined ? `<b>Field elevation · ${Number(point.elevation_ft).toLocaleString()} ft MSL</b>` : ""}${point.altitude ? `<b>Target altitude · ${Number(point.altitude).toLocaleString()} ft MSL</b>` : ""}${point.forecast_wind ? `<em>Forecast wind · ${escapeMapText(point.forecast_wind)}</em>` : ""}${point.facility ? `<em>${escapeMapText(point.facility)}${point.frequency ? ` · ${escapeMapText(point.frequency)}` : ""}</em>` : ""}<code>${Number(point.lat).toFixed(4)}, ${Number(point.lon).toFixed(4)}</code></div>`
       );
   });
 

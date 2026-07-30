@@ -92,7 +92,7 @@ tests/                 Automated Flask tests
 
 ## Data sources and tools
 
-- [OurAirports](https://ourairports.com/data/) public-domain global airport data
+- [OurAirports](https://ourairports.com/data/) public-domain global airport coordinates and field elevations
 - [AviationWeather.gov](https://aviationweather.gov/data/api/) aviation weather and identifier validation
 - [Open-Meteo](https://open-meteo.com/en/docs) global pressure-level wind forecasts
 - [FAA Aircraft Characteristics Database](https://www.faa.gov/airports/engineering/aircraft_char_database) aircraft specifications

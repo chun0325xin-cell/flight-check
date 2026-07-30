@@ -665,13 +665,15 @@ def local_fallback_routes(data: dict) -> list[dict]:
         endpoint_points = [
             {
                 "id": departure["code"], "altitude_ft": None,
-                "action": "Departure — verify airport elevation, SID, runway, and clearance.",
+                "elevation_ft": departure.get("elevation_ft"),
+                "action": "Departure — verify field elevation, SID, runway, altimeter setting, and clearance.",
                 "name": departure["name"], "type": "Airport",
                 "lat": departure["lat"], "lon": departure["lon"],
             },
             {
                 "id": destination["code"], "altitude_ft": None,
-                "action": "Arrival — verify STAR, approach, runway, and clearance.",
+                "elevation_ft": destination.get("elevation_ft"),
+                "action": "Arrival — verify field elevation, STAR, approach, runway, altimeter setting, and clearance.",
                 "name": destination["name"], "type": "Airport",
                 "lat": destination["lat"], "lon": destination["lon"],
             },
@@ -1275,6 +1277,8 @@ def ai_route_planner():
             "fuel_burn": fuel_burn, "reserve_minutes": 45, "loaded_weight": payload_weight,
             "current_weather_observations": fetch_metars([departure, destination]),
             "current_terminal_forecasts": fetch_aviation_json("taf", [departure, destination]),
+            "departure_airport": global_airports_by_code()[departure],
+            "destination_airport": global_airports_by_code()[destination],
         }
         cruise_altitude = {"widebody": 35000, "narrowbody": 33000, "regional": 24000}[selected_aircraft["class_group"]]
         data["route_winds_aloft"] = fetch_route_winds(departure, destination, cruise_altitude)
@@ -1322,6 +1326,8 @@ def ai_route_planner():
                 altitude = None
             point["altitude"] = altitude if altitude is not None and 0 <= altitude <= 60000 else None
             point["action"] = str(suggestion.get("action", "Research and verify this waypoint."))[:240]
+            airport_record = global_airports_by_code().get(point["id"])
+            point["elevation_ft"] = airport_record.get("elevation_ft") if airport_record else None
         if len(route_points) < 2:
             flash("The airport identifiers could not be verified. Check the codes and try again.", "error")
             return redirect(url_for("ai_route_planner"))

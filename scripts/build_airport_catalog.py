@@ -30,6 +30,7 @@ def main(airports_csv: str, countries_csv: str, output_json: str, navaids_csv: s
                 "country": countries.get(row["iso_country"], row["iso_country"]),
                 "lat": float(row["latitude_deg"]),
                 "lon": float(row["longitude_deg"]),
+                "elevation_ft": int(float(row["elevation_ft"])) if row["elevation_ft"].strip() else None,
                 "type": row["type"].replace("_", " ").title(),
             })
 
