@@ -25,6 +25,7 @@
       <div><small>EST. TIME</small><strong>{{ route.ete_minutes }} min</strong></div>
       <div><small>EST. FUEL</small><strong>{{ route.estimated_fuel }} gal</strong></div>
     </div>
+    <div class="route-rationale"><small>WHY THIS ROUTE</small><p>{{ route.rationale if route.rationale is defined else route.summary }}</p></div>
     <div class="route-map" data-route-map="route-points-data-{{ loop.index }}" aria-label="{{ route.optimization }} route map"></div>
     <ol class="waypoint-manifest">
       {% for point in route.route_points %}

@@ -243,8 +243,13 @@ class FlightCheckTests(unittest.TestCase):
             "warnings": ["Verify all route information."],
         }
         comparison = [
-            {**candidate, "optimization": "lowest_fuel"},
-            {**candidate, "optimization": "fastest"},
+            {**candidate, "optimization": "lowest_fuel", "rationale": "Lower fuel explanation."},
+            {**candidate, "optimization": "fastest", "rationale": "Faster route explanation.",
+             "waypoints": [
+                 {"id": "KJFK", "altitude_ft": None, "action": "Departure"},
+                 {"id": "CAM", "altitude_ft": 4500, "action": "Cruise target"},
+                 {"id": "KALB", "altitude_ft": None, "action": "Arrival"},
+             ]},
         ]
         with patch("app.generate_ai_route_comparison", return_value=(comparison, "Test AI")), patch(
             "app.resolve_route_points", return_value=(points, [])
@@ -263,6 +268,8 @@ class FlightCheckTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Lowest fuel", response.data)
         self.assertIn(b"Fastest route", response.data)
+        self.assertIn(b"WHY THIS ROUTE", response.data)
+        self.assertIn(b"Lower fuel explanation.", response.data)
         self.assertIn(b"GAYEL", response.data)
         self.assertIn(b"5,500 ft MSL", response.data)
         history = self.client.get("/history")

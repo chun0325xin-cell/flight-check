@@ -557,6 +557,10 @@ def local_fallback_routes(data: dict) -> list[dict]:
                 "A structured educational fallback using nearby real-world navaids and a climb/cruise/descent "
                 "profile. It does not establish an airway, procedure, clearance, or flyable route."
             ),
+            "rationale": (
+                "This fallback uses a different geometric navaid pattern and altitude profile for comparison. "
+                "No verified winds-aloft data was available, so it does not claim a wind or fuel advantage."
+            ),
             "waypoints": points,
             "_route_points": points,
             "warnings": [
@@ -644,13 +648,16 @@ def generate_ai_route_comparison(data: dict) -> tuple[list[dict], str]:
 
     prompt = (
         "Create two educational candidate routes for a student pilot in one response. Return JSON only with "
-        "a routes array containing exactly two objects. Each object must have optimization, summary, waypoints, "
-        "and warnings. One optimization must be lowest_fuel and the other fastest. Each waypoints array must "
+        "a routes array containing exactly two objects. Each object must have optimization, summary, rationale, "
+        "waypoints, and warnings. One optimization must be lowest_fuel and the other fastest. The waypoint "
+        "sequences must be different. Each waypoints array must "
         "contain 2-8 objects with id, altitude_ft, and action, begin at the supplied departure, and end at the "
         "supplied destination. Use real airport, navaid, or fix identifiers appropriate to the countries crossed. "
-        "Make the routes meaningfully "
-        "different when a legitimate tradeoff exists. Use supplied METAR/TAF records only and flag missing or "
-        "stale weather. Altitudes are planning targets, not clearances. Never invent radio frequencies or claim "
+        "Make the routes meaningfully different. In rationale, explain why the lowest_fuel option may reduce "
+        "fuel and why the fastest option may reduce time, discussing distance, waypoint count, altitude profile, "
+        "and only the wind/weather evidence actually supplied. Use supplied METAR/TAF records only and flag "
+        "missing, stale, or route-wide winds-aloft data. Never invent wind direction or claim a fuel benefit from "
+        "wind without supporting data. Altitudes are planning targets, not clearances. Never invent radio frequencies or claim "
         "a route is safe, legal, cleared, or globally optimal. Require verification of charts, NOTAMs, weather, "
         "terrain, airspace, approved performance, loading, fuel, ATC instructions, and instructor review."
     )
@@ -698,6 +705,7 @@ def present_ai_route(row: sqlite3.Row | dict) -> dict:
         plan["warnings"] = json.loads(plan["warnings"])
     except (json.JSONDecodeError, TypeError):
         plan["route_points"], plan["warnings"] = [], ["Saved route data could not be read."]
+    plan["rationale"] = plan.get("rationale") or plan.get("summary", "")
     return plan
 
 
@@ -1142,6 +1150,13 @@ def ai_route_planner():
         return redirect(url_for("ai_route_planner"))
 
     candidates, agent_source = generate_ai_route_comparison(data)
+    route_signatures = [
+        tuple(str(point.get("id", "")).upper() for point in candidate.get("waypoints", []))
+        for candidate in candidates
+    ]
+    if len(route_signatures) == 2 and route_signatures[0] == route_signatures[1]:
+        candidates[1] = local_fallback_routes(data)[1]
+        agent_source += " · alternate route differentiated locally"
     plans = []
     for optimization, candidate in zip(("lowest_fuel", "fastest"), candidates):
         route_input = {**data, "optimization": optimization}
@@ -1164,6 +1179,7 @@ def ai_route_planner():
             unresolved = []
         else:
             route_points, unresolved = resolve_route_points(identifiers)
+            route_points = [dict(point) for point in route_points]
         submitted_by_id = {str(item.get("id", "")).upper(): item for item in submitted if isinstance(item, dict)}
         for point in route_points:
             suggestion = submitted_by_id.get(point["id"], {})
@@ -1184,6 +1200,10 @@ def ai_route_planner():
             warnings.append("Removed unverified AI waypoint identifiers: " + ", ".join(unresolved) + ".")
         warnings.append("Speed and fuel burn are aircraft-category comparison estimates; verify approved performance, winds, loading, reserves, weather, NOTAMs, terrain, airspace, and ATC routing.")
         summary = str(candidate.get("summary", "Candidate route generated for review."))[:1200]
+        rationale = str(candidate.get(
+            "rationale",
+            "Compare distance, altitude profile, weather evidence, time, and estimated fuel before choosing."
+        ))[:1200]
         cursor = get_db().execute(
             """INSERT INTO ai_route_plans (
                 created_at, departure, destination, aircraft_type, empty_weight, payload_weight,
@@ -1199,7 +1219,7 @@ def ai_route_planner():
              json.dumps(warnings), agent_source))
         plans.append({**route_input, "id": cursor.lastrowid, "distance": distance,
                       "ete_minutes": ete_minutes, "estimated_fuel": estimated_fuel,
-                      "route_points": route_points, "summary": summary,
+                      "route_points": route_points, "summary": summary, "rationale": rationale,
                       "warnings": warnings, "agent_source": agent_source})
     get_db().commit()
     return render_template("ai_plan_result.html", plans=plans, plan=plans[0])
