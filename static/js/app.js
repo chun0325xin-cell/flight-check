@@ -301,6 +301,56 @@ if (routeAircraftData) {
 
 const aiRouteForm = document.querySelector("#ai-route-form");
 if (aiRouteForm) {
+  document.querySelectorAll(".airport-combobox").forEach((combobox) => {
+    const search = combobox.querySelector('input[aria-autocomplete="list"]');
+    const code = combobox.querySelector('input[type="hidden"]');
+    const suggestions = combobox.querySelector(".airport-suggestions");
+    let requestNumber = 0;
+    let timer;
+
+    function chooseAirport(airport) {
+      const iata = airport.iata ? ` · ${airport.iata}` : "";
+      search.value = `${airport.name} — ${airport.city || airport.country} (${airport.code}${iata})`;
+      code.value = airport.code;
+      search.setCustomValidity("");
+      suggestions.replaceChildren();
+      suggestions.classList.remove("is-open");
+    }
+
+    search.addEventListener("input", () => {
+      code.value = "";
+      search.setCustomValidity("");
+      clearTimeout(timer);
+      const query = search.value.trim();
+      if (!query) {
+        suggestions.replaceChildren();
+        suggestions.classList.remove("is-open");
+        return;
+      }
+      timer = setTimeout(async () => {
+        const currentRequest = ++requestNumber;
+        try {
+          const response = await fetch(`/api/airports?q=${encodeURIComponent(query)}`);
+          const data = await response.json();
+          if (currentRequest !== requestNumber) return;
+          suggestions.replaceChildren();
+          data.airports.forEach((airport) => {
+            const option = document.createElement("button");
+            option.type = "button";
+            option.setAttribute("role", "option");
+            option.innerHTML = `<b>${airport.name}</b><span>${airport.city || "Location unavailable"}, ${airport.country}</span><code>${airport.iata || "—"} · ${airport.code}</code>`;
+            option.addEventListener("click", () => chooseAirport(airport));
+            suggestions.appendChild(option);
+          });
+          suggestions.classList.toggle("is-open", data.airports.length > 0);
+        } catch {
+          suggestions.replaceChildren();
+          suggestions.classList.remove("is-open");
+        }
+      }, 180);
+    });
+  });
+
   aiRouteForm.addEventListener("submit", (event) => {
     const airportFields = [
       [document.querySelector("#departure-airport-search"), document.querySelector("#departure-airport-code")],
@@ -308,13 +358,11 @@ if (aiRouteForm) {
     ];
     let validAirports = true;
     airportFields.forEach(([search, code]) => {
-      const match = search.value.trim().match(/\(([A-Z0-9]{3,4})\)$/);
-      if (!match) {
+      if (!code.value) {
         search.setCustomValidity("Choose an airport from the suggestions.");
         validAirports = false;
       } else {
         search.setCustomValidity("");
-        code.value = match[1];
       }
     });
     if (!validAirports) {

@@ -199,11 +199,17 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Generate both routes", response.data)
         self.assertNotIn(b'name="checkpoints"', response.data)
         self.assertNotIn(b'name="payload_weight"', response.data)
-        self.assertIn(b"John F. Kennedy International Airport (KJFK)", response.data)
-        self.assertIn(b'id="airport-options"', response.data)
-        self.assertIn(b'list="airport-options"', response.data)
+        self.assertIn(b"Search 5,900+ airports worldwide", response.data)
+        self.assertIn(b'class="airport-suggestions"', response.data)
         self.assertIn(b'name="departure"', response.data)
         self.assertIn(b'name="destination"', response.data)
+
+    def test_global_airport_search(self):
+        response = self.client.get("/api/airports?q=heathrow")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["airports"][0]["code"], "EGLL")
+        self.assertEqual(payload["airports"][0]["iata"], "LHR")
 
     def test_ai_route_designer_validates_calculates_and_saves(self):
         points = [

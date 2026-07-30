@@ -12,7 +12,7 @@ FlightCheck is an educational preflight risk-reflection web app for student pilo
 - Waypoint-by-waypoint navigation log for planned altitude, radio facility, frequency, and notes
 - Weather-factor workspace with optional live METAR observations
 - Built-in planning assistant with optional OpenAI Responses API enhancement
-- AI Route Designer that accepts airports, aircraft/loading, cruise performance, and a lowest-fuel or fastest objective
+- AI Route Designer with searchable global airports and automatic lowest-fuel and fastest route comparison
 - Server-side validation of AI-suggested waypoint identifiers before map display, with proposed altitude at each validated point
 - Explainable risk indicator with factor-by-factor feedback
 - Persistent assessment history
@@ -89,6 +89,15 @@ tests/                 Automated Flask tests
 - AI waypoint and altitude suggestions can be wrong or incomplete. Identifiers are checked before mapping, but pilots must independently verify charts, terrain, airspace, weather, NOTAMs, performance, weight-and-balance/CG, fuel requirements, and ATC instructions.
 - Assessments are local to the machine running the app and do not have user accounts.
 - The app cannot determine whether a flight is legal or safe.
+
+## Data sources and tools
+
+- [OurAirports](https://ourairports.com/data/) public-domain global airport data
+- [AviationWeather.gov](https://aviationweather.gov/data/api/) aviation weather and identifier validation
+- [FAA Aircraft Characteristics Database](https://www.faa.gov/airports/engineering/aircraft_char_database) aircraft specifications
+- [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) optional route-candidate generation
+- [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/copyright) route maps
+- [Wikimedia Commons](https://commons.wikimedia.org/) aircraft photography
 
 ## Possible future improvements
 

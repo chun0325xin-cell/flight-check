@@ -9,6 +9,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 
 from flask import Flask, abort, flash, g, redirect, render_template, request, url_for
@@ -18,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATABASE = Path(os.environ.get("FLIGHTCHECK_DATABASE", BASE_DIR / "instance" / "flightcheck.db"))
 AIRCRAFT_SOURCE = BASE_DIR / "data" / "aircraft-master.txt"
 FAA_AIRCRAFT_SOURCE = BASE_DIR / "data" / "faa-aircraft.json"
+GLOBAL_AIRPORTS_SOURCE = BASE_DIR / "data" / "global-airports.json"
 US_AIRPORTS = [
     ("KATL", "Hartsfield–Jackson Atlanta International Airport"),
     ("KAUS", "Austin–Bergstrom International Airport"),
@@ -471,6 +473,16 @@ def response_output_text(body: dict) -> str:
     ).strip()
 
 
+@lru_cache(maxsize=1)
+def load_global_airports() -> list[dict]:
+    return json.loads(GLOBAL_AIRPORTS_SOURCE.read_text(encoding="utf-8"))
+
+
+@lru_cache(maxsize=1)
+def global_airport_codes() -> set[str]:
+    return {airport["code"] for airport in load_global_airports()}
+
+
 def generate_ai_route_candidate(data: dict) -> tuple[dict, str]:
     """Generate a candidate only; every returned identifier is validated before display."""
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -490,7 +502,8 @@ def generate_ai_route_candidate(data: dict) -> tuple[dict, str]:
     prompt = (
         "Create one educational candidate route for a student pilot. Return JSON only with keys summary, "
         "waypoints, and warnings. waypoints must contain 2-8 objects with id, altitude_ft, and action. "
-        "Use real US airport/navaid/fix identifiers only, starting at departure and ending at destination. "
+        "Use real airport, navaid, or fix identifiers appropriate to the countries crossed, starting at departure "
+        "and ending at destination. "
         "Choose a simple candidate that matches the requested optimization: fastest means minimum practical "
         "distance; lowest_fuel means minimum estimated fuel using supplied cruise speed and fuel burn. "
         "Altitude values are planning targets in feet MSL, not clearances. Never invent radio frequencies, "
@@ -552,7 +565,8 @@ def generate_ai_route_comparison(data: dict) -> tuple[list[dict], str]:
         "a routes array containing exactly two objects. Each object must have optimization, summary, waypoints, "
         "and warnings. One optimization must be lowest_fuel and the other fastest. Each waypoints array must "
         "contain 2-8 objects with id, altitude_ft, and action, begin at the supplied departure, and end at the "
-        "supplied destination. Use real US airport, navaid, or fix identifiers only. Make the routes meaningfully "
+        "supplied destination. Use real airport, navaid, or fix identifiers appropriate to the countries crossed. "
+        "Make the routes meaningfully "
         "different when a legitimate tradeoff exists. Use supplied METAR/TAF records only and flag missing or "
         "stale weather. Altitudes are planning targets, not clearances. Never invent radio frequencies or claim "
         "a route is safe, legal, cleared, or globally optimal. Require verification of charts, NOTAMs, weather, "
@@ -784,6 +798,39 @@ def aircraft():
     return render_template("aircraft.html", aircraft=aircraft_catalog)
 
 
+@app.get("/api/airports")
+def airport_search():
+    query = request.args.get("q", "").strip().casefold()
+    if not query:
+        return {"airports": []}
+
+    def score(airport: dict) -> tuple[int, str]:
+        code = airport["code"].casefold()
+        iata = airport["iata"].casefold()
+        name = airport["name"].casefold()
+        city = airport["city"].casefold()
+        country = airport["country"].casefold()
+        if query == code or query == iata:
+            rank = 0
+        elif code.startswith(query) or iata.startswith(query):
+            rank = 1
+        elif name.startswith(query) or city.startswith(query) or country.startswith(query):
+            rank = 2
+        else:
+            rank = 3
+        return rank, airport["name"]
+
+    matches = [
+        airport for airport in load_global_airports()
+        if query in " ".join((
+            airport["code"], airport["iata"], airport["name"],
+            airport["city"], airport["country"],
+        )).casefold()
+    ]
+    matches.sort(key=score)
+    return {"airports": matches[:12]}
+
+
 @app.get("/aircraft/<slug>")
 def aircraft_detail(slug: str):
     item = next((entry for entry in load_aircraft_catalog() if entry["slug"] == slug), None)
@@ -970,14 +1017,13 @@ def route_planner():
 @app.route("/ai-plan", methods=["GET", "POST"])
 def ai_route_planner():
     if request.method == "GET":
-        return render_template("ai_planner.html", aircraft=load_aircraft_catalog(), airports=US_AIRPORTS)
+        return render_template("ai_planner.html", aircraft=load_aircraft_catalog())
     try:
         departure = request.form.get("departure", "").strip().upper()[:4]
         destination = request.form.get("destination", "").strip().upper()[:4]
         if not (3 <= len(departure) <= 4 and departure.isalnum() and 3 <= len(destination) <= 4 and destination.isalnum()):
             raise ValueError("Enter valid three- or four-character airport identifiers.")
-        valid_airports = {code for code, _name in US_AIRPORTS}
-        if departure not in valid_airports or destination not in valid_airports:
+        if departure not in global_airport_codes() or destination not in global_airport_codes():
             raise ValueError("Choose both airports from the provided list.")
         if departure == destination:
             raise ValueError("Departure and arrival airports must be different.")
