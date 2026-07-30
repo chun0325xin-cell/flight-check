@@ -49,6 +49,8 @@ class FlightCheckTests(unittest.TestCase):
         self.assertNotIn(b'class="button landing-primary"', response.data)
         self.assertIn(b"images/pilotbrief-logo.png", response.data)
         self.assertIn(b'class="header-logo"', response.data)
+        self.assertIn(b"favicon.ico", response.data)
+        self.assertIn(b"apple-touch-icon.png", response.data)
         self.assertIn(b'class="button landing-secondary landing-tips-button"', response.data)
 
     def test_briefing_page_contains_assessment(self):
