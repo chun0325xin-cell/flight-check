@@ -24,6 +24,9 @@
       <div><small>DISTANCE</small><strong>{{ route.distance }} nm</strong></div>
       <div><small>EST. TIME</small><strong>{{ route.ete_minutes }} min</strong></div>
       <div><small>EST. FUEL</small><strong>{{ route.estimated_fuel }} gal</strong></div>
+      {% if route.wind_component is defined and route.wind_component is not none %}
+      <div><small>AVG WIND EFFECT</small><strong>{{ "+" if route.wind_component >= 0 else "−" }}{{ route.wind_component|abs }} kt</strong></div>
+      {% endif %}
     </div>
     <div class="route-rationale"><small>WHY THIS ROUTE</small><p>{{ route.rationale if route.rationale is defined else route.summary }}</p></div>
     <div class="route-map" data-route-map="route-points-data-{{ loop.index }}" aria-label="{{ route.optimization }} route map"></div>
@@ -31,6 +34,7 @@
       {% for point in route.route_points %}
       <li><span>{{ point.order }}</span><div><strong>{{ point.id }}</strong><small>{{ point.name }} · {{ point.type }}</small>
         {% if point.altitude is not none %}<b>{{ "{:,}".format(point.altitude) }} ft MSL</b>{% else %}<b class="missing-cell">Altitude to verify</b>{% endif %}
+        {% if point.forecast_wind %}<small>Forecast wind {{ point.forecast_wind }}</small>{% endif %}
         <p>{{ point.action }}</p></div></li>
       {% endfor %}
     </ol>

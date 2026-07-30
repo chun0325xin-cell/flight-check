@@ -227,6 +227,20 @@ class FlightCheckTests(unittest.TestCase):
             self.assertTrue(any(point["altitude_ft"] for point in route["waypoints"][1:-1]))
             self.assertTrue(all(point.get("lat") is not None for point in route["_route_points"]))
 
+    def test_wind_forecast_changes_route_time(self):
+        points = [
+            {"id": "A", "lat": 40.0, "lon": -75.0},
+            {"id": "B", "lat": 40.0, "lon": -70.0},
+        ]
+        weather = {
+            "available": True,
+            "samples": [{"lat": 40.0, "lon": -72.5, "wind_speed_kt": 50, "wind_from_deg": 270}],
+        }
+        result = flightcheck.apply_forecast_winds(points, 400, weather)
+        self.assertLess(result["ete_minutes"], result["still_air_minutes"])
+        self.assertGreater(result["average_wind_component_kt"], 0)
+        self.assertIn("270", points[0]["forecast_wind"])
+
     def test_ai_route_designer_validates_calculates_and_saves(self):
         points = [
             {"id": "KJFK", "name": "John F Kennedy", "lat": 40.6413, "lon": -73.7781, "type": "Airport / station", "order": 1},

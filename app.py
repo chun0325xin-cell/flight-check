@@ -314,6 +314,132 @@ def fetch_metars(stations: list[str]) -> list[dict]:
         return []
 
 
+def interpolate_corridor(first: dict, second: dict, count: int = 7) -> list[dict]:
+    """Return evenly spaced points while taking the short path across the dateline."""
+    lon_delta = second["lon"] - first["lon"]
+    if lon_delta > 180:
+        lon_delta -= 360
+    elif lon_delta < -180:
+        lon_delta += 360
+    return [
+        {
+            "fraction": index / (count - 1),
+            "lat": round(first["lat"] + (second["lat"] - first["lat"]) * index / (count - 1), 4),
+            "lon": round(((first["lon"] + lon_delta * index / (count - 1) + 180) % 360) - 180, 4),
+        }
+        for index in range(count)
+    ]
+
+
+def fetch_route_winds(departure: str, destination: str, cruise_altitude: int) -> dict:
+    """Fetch global forecast winds along the route corridor from Open-Meteo."""
+    empty = {
+        "available": False,
+        "source": "Open-Meteo GFS",
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "forecast_time": None,
+        "pressure_level_hpa": None,
+        "approx_altitude_ft": cruise_altitude,
+        "samples": [],
+    }
+    if app.config.get("TESTING"):
+        return empty
+    airports = global_airports_by_code()
+    if departure not in airports or destination not in airports:
+        return empty
+    pressure_level = min((200, 250, 300, 400, 500, 700, 850), key=lambda level: abs({
+        200: 38600, 250: 34000, 300: 30000, 400: 23600, 500: 18200, 700: 9900, 850: 4800
+    }[level] - cruise_altitude))
+    corridor = interpolate_corridor(airports[departure], airports[destination])
+    speed_field = f"wind_speed_{pressure_level}hPa"
+    direction_field = f"wind_direction_{pressure_level}hPa"
+    query = urllib.parse.urlencode({
+        "latitude": ",".join(str(point["lat"]) for point in corridor),
+        "longitude": ",".join(str(point["lon"]) for point in corridor),
+        "hourly": f"{speed_field},{direction_field}",
+        "forecast_days": 2,
+        "wind_speed_unit": "kn",
+        "timezone": "UTC",
+    })
+    request_data = urllib.request.Request(
+        f"https://api.open-meteo.com/v1/forecast?{query}",
+        headers={"User-Agent": "FlightCheck-Student-Project/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(request_data, timeout=10) as response:
+            body = json.loads(response.read().decode("utf-8"))
+        forecasts = body if isinstance(body, list) else [body]
+        samples = []
+        now = datetime.now(timezone.utc)
+        forecast_time = None
+        for point, forecast in zip(corridor, forecasts):
+            hourly = forecast.get("hourly", {})
+            times = hourly.get("time", [])
+            speeds = hourly.get(speed_field, [])
+            directions = hourly.get(direction_field, [])
+            if not times or not speeds or not directions:
+                continue
+            parsed_times = [datetime.fromisoformat(value).replace(tzinfo=timezone.utc) for value in times]
+            index = min(range(len(parsed_times)), key=lambda item: abs((parsed_times[item] - now).total_seconds()))
+            if speeds[index] is None or directions[index] is None:
+                continue
+            forecast_time = times[index] + "Z"
+            samples.append({
+                **point,
+                "wind_speed_kt": round(float(speeds[index]), 1),
+                "wind_from_deg": round(float(directions[index])),
+            })
+        return {
+            **empty,
+            "available": bool(samples),
+            "forecast_time": forecast_time,
+            "pressure_level_hpa": pressure_level,
+            "samples": samples,
+        }
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError, TypeError, IndexError):
+        return empty
+
+
+def initial_bearing(first: dict, second: dict) -> float:
+    lat1, lat2 = math.radians(first["lat"]), math.radians(second["lat"])
+    dlon = math.radians(second["lon"] - first["lon"])
+    x = math.sin(dlon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
+
+
+def apply_forecast_winds(route_points: list[dict], cruise_speed: float, weather: dict) -> dict:
+    """Estimate leg time using the nearest forecast sample; never substitutes for performance planning."""
+    samples = weather.get("samples", []) if weather.get("available") else []
+    total_minutes = 0.0
+    still_air_minutes = 0.0
+    components = []
+    for first, second in zip(route_points, route_points[1:]):
+        distance = haversine_nm(first, second)
+        still_air_minutes += distance / cruise_speed * 60
+        midpoint = {"lat": (first["lat"] + second["lat"]) / 2, "lon": (first["lon"] + second["lon"]) / 2}
+        sample = min(samples, key=lambda item: haversine_nm(midpoint, item)) if samples else None
+        if sample:
+            calculation = calculate_wind_plan(
+                initial_bearing(first, second), cruise_speed,
+                sample["wind_from_deg"], sample["wind_speed_kt"],
+            )
+            groundspeed = calculation["groundspeed"]
+            component = groundspeed - cruise_speed
+            components.append(component)
+            first["forecast_wind"] = (
+                f"{sample['wind_from_deg']:03.0f}° at {sample['wind_speed_kt']:.0f} kt"
+            )
+        else:
+            groundspeed = cruise_speed
+        total_minutes += distance / max(groundspeed, 1) * 60
+    return {
+        "ete_minutes": math.ceil(total_minutes),
+        "still_air_minutes": math.ceil(still_air_minutes),
+        "average_wind_component_kt": round(sum(components) / len(components), 1) if components else None,
+    }
+
+
 def parse_waypoint_ids(departure: str, checkpoints: str, destination: str) -> list[str]:
     middle = [
         item.strip().upper()
@@ -559,7 +685,12 @@ def local_fallback_routes(data: dict) -> list[dict]:
             ),
             "rationale": (
                 "This fallback uses a different geometric navaid pattern and altitude profile for comparison. "
-                "No verified winds-aloft data was available, so it does not claim a wind or fuel advantage."
+                + (
+                    "Current Open-Meteo model winds were supplied to the later time-and-fuel estimate, but the "
+                    "navaid sequence itself remains geometric and must not be treated as an operational route."
+                    if data.get("route_winds_aloft", {}).get("available")
+                    else "No route-wide forecast winds were available, so it does not claim a wind or fuel advantage."
+                )
             ),
             "waypoints": points,
             "_route_points": points,
@@ -1145,6 +1276,8 @@ def ai_route_planner():
             "current_weather_observations": fetch_metars([departure, destination]),
             "current_terminal_forecasts": fetch_aviation_json("taf", [departure, destination]),
         }
+        cruise_altitude = {"widebody": 35000, "narrowbody": 33000, "regional": 24000}[selected_aircraft["class_group"]]
+        data["route_winds_aloft"] = fetch_route_winds(departure, destination, cruise_altitude)
     except ValueError as exc:
         flash(str(exc), "error")
         return redirect(url_for("ai_route_planner"))
@@ -1193,12 +1326,24 @@ def ai_route_planner():
             flash("The airport identifiers could not be verified. Check the codes and try again.", "error")
             return redirect(url_for("ai_route_planner"))
         distance = round(sum(haversine_nm(a, b) for a, b in zip(route_points, route_points[1:])), 1)
-        ete_minutes = math.ceil(distance / data["cruise_speed"] * 60)
+        wind_result = apply_forecast_winds(route_points, data["cruise_speed"], data["route_winds_aloft"])
+        ete_minutes = wind_result["ete_minutes"]
         estimated_fuel = round(((ete_minutes + data["reserve_minutes"]) / 60) * data["fuel_burn"], 1)
         warnings = [str(item)[:300] for item in candidate.get("warnings", []) if str(item).strip()]
         if unresolved:
             warnings.append("Removed unverified AI waypoint identifiers: " + ", ".join(unresolved) + ".")
         warnings.append("Speed and fuel burn are aircraft-category comparison estimates; verify approved performance, winds, loading, reserves, weather, NOTAMs, terrain, airspace, and ATC routing.")
+        if data["route_winds_aloft"]["available"]:
+            wind_component = wind_result["average_wind_component_kt"]
+            wind_word = "tailwind" if wind_component is not None and wind_component >= 0 else "headwind"
+            warnings.append(
+                f"Open-Meteo {data['route_winds_aloft']['pressure_level_hpa']} hPa forecast "
+                f"({data['route_winds_aloft']['forecast_time']}) was sampled along the corridor; "
+                f"estimated average {wind_word} component {abs(wind_component or 0):.1f} kt. "
+                "Forecast winds are model guidance, not an official aviation briefing."
+            )
+        else:
+            warnings.append("Route-wide forecast winds were unavailable, so time and fuel use still-air estimates.")
         summary = str(candidate.get("summary", "Candidate route generated for review."))[:1200]
         rationale = str(candidate.get(
             "rationale",
@@ -1220,7 +1365,9 @@ def ai_route_planner():
         plans.append({**route_input, "id": cursor.lastrowid, "distance": distance,
                       "ete_minutes": ete_minutes, "estimated_fuel": estimated_fuel,
                       "route_points": route_points, "summary": summary, "rationale": rationale,
-                      "warnings": warnings, "agent_source": agent_source})
+                      "warnings": warnings, "agent_source": agent_source,
+                      "wind_component": wind_result["average_wind_component_kt"],
+                      "wind_forecast": data["route_winds_aloft"]})
     get_db().commit()
     return render_template("ai_plan_result.html", plans=plans, plan=plans[0])
 

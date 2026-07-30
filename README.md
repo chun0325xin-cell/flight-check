@@ -83,9 +83,9 @@ tests/                 Automated Flask tests
 ## Known limitations
 
 - Risk weights are educational design choices, not medically or operationally validated aviation standards.
-- FlightCheck retrieves recent METAR observations when the public AviationWeather.gov API is available, but it does not provide a complete or official weather briefing.
+- FlightCheck retrieves recent METAR/TAF information from AviationWeather.gov and samples Open-Meteo model winds along the route corridor, but it does not provide a complete or official weather briefing.
 - Route calculations use user-entered true course and wind; they do not account for magnetic variation, climb/descent, changing winds, terrain, airspace, or aircraft-specific performance.
-- “Lowest fuel” and “fastest” are comparison objectives based only on the entered cruise values and generated candidate; they are not guarantees of a globally optimal, legal, or safe route.
+- “Lowest fuel” and “fastest” use aircraft-category estimates plus available forecast wind components; they are not guarantees of a globally optimal, legal, or safe route.
 - AI waypoint and altitude suggestions can be wrong or incomplete. Identifiers are checked before mapping, but pilots must independently verify charts, terrain, airspace, weather, NOTAMs, performance, weight-and-balance/CG, fuel requirements, and ATC instructions.
 - Assessments are local to the machine running the app and do not have user accounts.
 - The app cannot determine whether a flight is legal or safe.
@@ -94,6 +94,7 @@ tests/                 Automated Flask tests
 
 - [OurAirports](https://ourairports.com/data/) public-domain global airport data
 - [AviationWeather.gov](https://aviationweather.gov/data/api/) aviation weather and identifier validation
+- [Open-Meteo](https://open-meteo.com/en/docs) global pressure-level wind forecasts
 - [FAA Aircraft Characteristics Database](https://www.faa.gov/airports/engineering/aircraft_char_database) aircraft specifications
 - [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) optional route-candidate generation
 - [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/copyright) route maps
