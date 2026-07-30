@@ -20,6 +20,7 @@ DATABASE = Path(os.environ.get("FLIGHTCHECK_DATABASE", BASE_DIR / "instance" / "
 AIRCRAFT_SOURCE = BASE_DIR / "data" / "aircraft-master.txt"
 FAA_AIRCRAFT_SOURCE = BASE_DIR / "data" / "faa-aircraft.json"
 GLOBAL_AIRPORTS_SOURCE = BASE_DIR / "data" / "global-airports.json"
+GLOBAL_NAVAIDS_SOURCE = BASE_DIR / "data" / "global-navaids.json"
 US_AIRPORTS = [
     ("KATL", "Hartsfield–Jackson Atlanta International Airport"),
     ("KAUS", "Austin–Bergstrom International Airport"),
@@ -483,6 +484,92 @@ def global_airport_codes() -> set[str]:
     return {airport["code"] for airport in load_global_airports()}
 
 
+@lru_cache(maxsize=1)
+def global_airports_by_code() -> dict[str, dict]:
+    return {airport["code"]: airport for airport in load_global_airports()}
+
+
+@lru_cache(maxsize=1)
+def load_global_navaids() -> list[dict]:
+    return json.loads(GLOBAL_NAVAIDS_SOURCE.read_text(encoding="utf-8"))
+
+
+def local_fallback_routes(data: dict) -> list[dict]:
+    departure = global_airports_by_code()[data["departure"]]
+    destination = global_airports_by_code()[data["destination"]]
+    aircraft_class = next(
+        (item["class_group"] for item in load_aircraft_catalog() if item["name"] == data["aircraft_type"]),
+        "narrowbody",
+    )
+    cruise_altitude = {"widebody": 37000, "narrowbody": 35000, "regional": 25000}[aircraft_class]
+
+    def interpolated_point(fraction: float) -> dict:
+        lon_delta = destination["lon"] - departure["lon"]
+        if lon_delta > 180:
+            lon_delta -= 360
+        elif lon_delta < -180:
+            lon_delta += 360
+        lon = ((departure["lon"] + lon_delta * fraction + 180) % 360) - 180
+        return {
+            "lat": departure["lat"] + (destination["lat"] - departure["lat"]) * fraction,
+            "lon": lon,
+        }
+
+    def altitude_for(fraction: float) -> tuple[int, str]:
+        if fraction <= 0.22:
+            return min(12000, cruise_altitude), "Climb segment — verify SID, terrain, restrictions, and clearance."
+        if fraction >= 0.78:
+            return min(12000, cruise_altitude), "Descent segment — verify STAR, crossing restrictions, and clearance."
+        return cruise_altitude, "Cruise segment — verify airway, direction-of-flight altitude, and clearance."
+
+    def build(optimization: str, fractions: tuple[float, ...]) -> dict:
+        selected = []
+        used = set()
+        for fraction in fractions:
+            target = interpolated_point(fraction)
+            candidates = sorted(load_global_navaids(), key=lambda item: haversine_nm(target, item))
+            navaid = next((item for item in candidates if item["id"] not in used), candidates[0])
+            used.add(navaid["id"])
+            altitude, action = altitude_for(fraction)
+            selected.append({
+                "id": navaid["id"], "altitude_ft": altitude, "action": action,
+                "name": navaid["name"], "type": navaid["type"],
+                "lat": navaid["lat"], "lon": navaid["lon"],
+            })
+        endpoint_points = [
+            {
+                "id": departure["code"], "altitude_ft": None,
+                "action": "Departure — verify airport elevation, SID, runway, and clearance.",
+                "name": departure["name"], "type": "Airport",
+                "lat": departure["lat"], "lon": departure["lon"],
+            },
+            {
+                "id": destination["code"], "altitude_ft": None,
+                "action": "Arrival — verify STAR, approach, runway, and clearance.",
+                "name": destination["name"], "type": "Airport",
+                "lat": destination["lat"], "lon": destination["lon"],
+            },
+        ]
+        points = [endpoint_points[0], *selected, endpoint_points[1]]
+        return {
+            "optimization": optimization,
+            "summary": (
+                "A structured educational fallback using nearby real-world navaids and a climb/cruise/descent "
+                "profile. It does not establish an airway, procedure, clearance, or flyable route."
+            ),
+            "waypoints": points,
+            "_route_points": points,
+            "warnings": [
+                "OpenAI route generation was unavailable; intermediate navaids were selected geometrically, not from current airways or ATC routing."
+            ],
+        }
+
+    return [
+        build("lowest_fuel", (0.22, 0.50, 0.78)),
+        build("fastest", (0.16, 0.36, 0.64, 0.84)),
+    ]
+
+
 def generate_ai_route_candidate(data: dict) -> tuple[dict, str]:
     """Generate a candidate only; every returned identifier is validated before display."""
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -553,12 +640,7 @@ def generate_ai_route_comparison(data: dict) -> tuple[list[dict], str]:
     """Generate both comparison routes in one API request to fit hosted request limits."""
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        routes = []
-        for optimization in ("lowest_fuel", "fastest"):
-            candidate, _source = generate_ai_route_candidate_without_api({**data, "optimization": optimization})
-            candidate["optimization"] = optimization
-            routes.append(candidate)
-        return routes, "FlightCheck fallback — OpenAI not connected"
+        return local_fallback_routes(data), "FlightCheck navaid fallback — OpenAI not connected"
 
     prompt = (
         "Create two educational candidate routes for a student pilot in one response. Return JSON only with "
@@ -598,12 +680,7 @@ def generate_ai_route_comparison(data: dict) -> tuple[list[dict], str]:
             return [by_optimization["lowest_fuel"], by_optimization["fastest"]], f"OpenAI {payload['model']}"
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, TypeError):
         pass
-    routes = []
-    for optimization in ("lowest_fuel", "fastest"):
-        candidate, _source = generate_ai_route_candidate_without_api({**data, "optimization": optimization})
-        candidate["optimization"] = optimization
-        routes.append(candidate)
-    return routes, "FlightCheck fallback — AI response unavailable"
+    return local_fallback_routes(data), "FlightCheck navaid fallback — AI response unavailable"
 
 
 def haversine_nm(first: dict, second: dict) -> float:
@@ -1076,7 +1153,17 @@ def ai_route_planner():
         if identifiers[-1] != destination:
             identifiers.append(destination)
         identifiers = list(dict.fromkeys(identifiers))
-        route_points, unresolved = resolve_route_points(identifiers)
+        if candidate.get("_route_points"):
+            route_points = [
+                {
+                    "id": point["id"], "name": point["name"], "type": point["type"],
+                    "lat": point["lat"], "lon": point["lon"], "order": order,
+                }
+                for order, point in enumerate(candidate["_route_points"], start=1)
+            ]
+            unresolved = []
+        else:
+            route_points, unresolved = resolve_route_points(identifiers)
         submitted_by_id = {str(item.get("id", "")).upper(): item for item in submitted if isinstance(item, dict)}
         for point in route_points:
             suggestion = submitted_by_id.get(point["id"], {})

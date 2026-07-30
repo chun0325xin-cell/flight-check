@@ -215,6 +215,18 @@ class FlightCheckTests(unittest.TestCase):
         self.assertEqual(payload["airports"][0]["code"], "EGLL")
         self.assertEqual(payload["airports"][0]["iata"], "LHR")
 
+    def test_fallback_routes_include_real_navaids_and_altitudes(self):
+        routes = flightcheck.local_fallback_routes({
+            "departure": "KJFK",
+            "destination": "EGLL",
+            "aircraft_type": "787-9 Dreamliner",
+        })
+        self.assertEqual([route["optimization"] for route in routes], ["lowest_fuel", "fastest"])
+        for route in routes:
+            self.assertGreaterEqual(len(route["waypoints"]), 5)
+            self.assertTrue(any(point["altitude_ft"] for point in route["waypoints"][1:-1]))
+            self.assertTrue(all(point.get("lat") is not None for point in route["_route_points"]))
+
     def test_ai_route_designer_validates_calculates_and_saves(self):
         points = [
             {"id": "KJFK", "name": "John F Kennedy", "lat": 40.6413, "lon": -73.7781, "type": "Airport / station", "order": 1},

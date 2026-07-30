@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 
-def main(airports_csv: str, countries_csv: str, output_json: str) -> None:
+def main(airports_csv: str, countries_csv: str, output_json: str, navaids_csv: str | None = None, navaids_json: str | None = None) -> None:
     with open(countries_csv, encoding="utf-8", newline="") as source:
         countries = {row["code"]: row["name"] for row in csv.DictReader(source)}
 
@@ -40,6 +40,27 @@ def main(airports_csv: str, countries_csv: str, output_json: str) -> None:
     )
     print(f"Wrote {len(airports):,} airports to {output_json}")
 
+    if navaids_csv and navaids_json:
+        navaids = []
+        with open(navaids_csv, encoding="utf-8", newline="") as source:
+            for row in csv.DictReader(source):
+                identifier = row["ident"].strip().upper()
+                if not identifier or not identifier.isalnum():
+                    continue
+                navaids.append({
+                    "id": identifier,
+                    "name": row["name"],
+                    "type": row["type"],
+                    "lat": float(row["latitude_deg"]),
+                    "lon": float(row["longitude_deg"]),
+                    "country": countries.get(row["iso_country"], row["iso_country"]),
+                })
+        Path(navaids_json).write_text(
+            json.dumps(navaids, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        print(f"Wrote {len(navaids):,} navaids to {navaids_json}")
+
 
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:6])
