@@ -12,8 +12,9 @@
   </div>
 </section>
 <section class="aircraft-spec-section">
-  <div class="aircraft-spec-heading"><div><small>FAA AIRCRAFT CHARACTERISTICS + GAME MASTER LIST</small><h2>Aircraft at a glance.</h2></div><p>FAA measurements describe representative aircraft types and may group several variants under one ICAO designator. Game capacity, range, and price come from The Airline Simulator list you supplied.</p></div>
+  <div class="aircraft-spec-heading"><div><small>FAA + MANUFACTURER DATA + GAME MASTER LIST</small><h2>Aircraft at a glance.</h2></div><p>Dimensions and weights come from FAA data where available, with manufacturer planning documents filling verified gaps. First-flight dates identify the exact model when verified; otherwise, the card clearly labels the aircraft-family program date. Game capacity, range, and price come from The Airline Simulator list you supplied.</p></div>
   <div class="aircraft-spec-grid">
+    <div><small>First flight</small><strong class="date-value">{{ aircraft.first_flight }}</strong><span>{{ aircraft.first_flight_scope }}</span></div>
     <div><small>Game maximum seats</small><strong>{{ aircraft.seats }}</strong><span>passengers</span></div>
     <div><small>Game range</small><strong>{{ aircraft.range_km }}</strong><span>km · {{ aircraft.range_nm }} nm</span></div>
     <div><small>Maximum takeoff weight</small><strong>{% if aircraft.mtow_lb %}{{ "{:,.0f}".format(aircraft.mtow_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.mtow_lb %}lb{% else %}not available in FAA match{% endif %}</span></div>
@@ -28,6 +29,7 @@
   <div class="aircraft-data-sources">
     <div><strong>FAA Aircraft Characteristics Database</strong><p>Dimensions, weights, engine class, approach speed, and wake category matched through the ICAO designator.</p><a href="https://www.faa.gov/airports/engineering/aircraft_char_database" target="_blank" rel="noopener">View official dataset ↗</a></div>
     <div><strong>The Airline Simulator master list</strong><p>Variant name, game capacity, game range, ICAO code, and simulator price.</p><a href="https://the-airline-simulator.fandom.com/wiki/Category:Aircraft" target="_blank" rel="noopener">View source page ↗</a></div>
+    {% if aircraft.spec_source %}<div><strong>Manufacturer planning data</strong><p>This model is not fully represented in the FAA dataset, so missing dimensions and weights were supplemented from manufacturer planning material.</p><a href="{{ aircraft.spec_source }}" target="_blank" rel="noopener">View supplemental source ↗</a></div>{% endif %}
   </div>
   <p class="map-disclaimer">Educational reference only. Do not use these summary values for weight-and-balance, performance, dispatch, airport compatibility, or operational decisions. Consult approved aircraft documents.</p>
 </section>

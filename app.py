@@ -872,6 +872,76 @@ def load_aircraft_catalog() -> list[dict]:
     }
     image_mappings_path = BASE_DIR / "data" / "aircraft-images.json"
     image_mappings = json.loads(image_mappings_path.read_text(encoding="utf-8")) if image_mappings_path.exists() else {}
+    faa_aliases = {"E140": "E135", "E175": "E75L"}
+    supplemental_specs = {
+        "b3xm-737-max-10": {
+            "faa_model": "Boeing 737-10", "engine_type": "Jet", "engines": 2,
+            "wingspan_ft": 117.8, "length_ft": 143.7, "height_ft": 40.3,
+            "mtow_lb": 197900, "wake_category": "Medium",
+            "spec_source": "https://www.boeing.com/commercial/737max",
+        },
+        "crjx-crj-1000": {
+            "faa_model": "Bombardier CRJ1000", "engine_type": "Jet", "engines": 2,
+            "wingspan_ft": 85.9, "length_ft": 128.4, "height_ft": 24.5,
+            "mtow_lb": 91800, "landing_weight_lb": 81500, "wake_category": "Medium",
+            "spec_source": "https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/%24FILE/ATT82VLY.pdf/CRJ1000APMR8.pdf",
+        },
+        "aj27-comac-arj-21-700": {
+            "faa_model": "COMAC ARJ21-700 / C909", "engine_type": "Jet", "engines": 2,
+            "wingspan_ft": 89.5, "length_ft": 109.8, "height_ft": 27.5,
+            "mtow_lb": 95901, "wake_category": "Medium",
+            "spec_source": "https://www.comac.cc/fujian/c909acap_en.pdf",
+        },
+        "c919-comac-c919-100std": {
+            "faa_model": "COMAC C919-100STD", "engine_type": "Jet", "engines": 2,
+            "wingspan_ft": 117.5, "length_ft": 127.6, "height_ft": 39.2,
+            "mtow_lb": 165567, "landing_weight_lb": 149474, "wake_category": "Medium",
+            "spec_source": "https://www.comac.cc/fujian/c919acap_en.pdf",
+        },
+        "c919-comac-c919-100er": {
+            "faa_model": "COMAC C919-100ER", "engine_type": "Jet", "engines": 2,
+            "wingspan_ft": 117.5, "length_ft": 127.6, "height_ft": 39.2,
+            "mtow_lb": 173944, "landing_weight_lb": 149474, "wake_category": "Medium",
+            "spec_source": "https://www.comac.cc/fujian/c919acap_en.pdf",
+        },
+    }
+    first_flight_by_family = {
+        ("Airbus", "A220"): ("September 16, 2013", "A220 / CSeries program"),
+        ("Airbus", "A320"): ("February 22, 1987", "A320 family program"),
+        ("Airbus", "A320neo"): ("September 25, 2014", "A320neo family program"),
+        ("Airbus", "A330"): ("November 2, 1992", "A330 family program"),
+        ("Airbus", "A330neo"): ("October 19, 2017", "A330neo family program"),
+        ("Airbus", "A340"): ("October 25, 1991", "A340 family program"),
+        ("Airbus", "A350"): ("June 14, 2013", "A350 family program"),
+        ("Airbus", "A380"): ("April 27, 2005", "A380 program"),
+        ("Boeing", "717"): ("September 2, 1998", "717 program"),
+        ("Boeing", "737"): ("February 9, 1997", "737 Next Generation program"),
+        ("Boeing", "737 MAX"): ("January 29, 2016", "737 MAX family program"),
+        ("Boeing", "747"): ("February 9, 1969", "747 family program"),
+        ("Boeing", "757"): ("February 19, 1982", "757 program"),
+        ("Boeing", "767"): ("September 26, 1981", "767 program"),
+        ("Boeing", "777"): ("June 12, 1994", "777 family program"),
+        ("Boeing", "777X"): ("January 25, 2020", "777X program"),
+        ("Boeing", "787 Dreamliner"): ("December 15, 2009", "787 program"),
+        ("Bombardier", "CRJ"): ("May 10, 1991", "CRJ family program"),
+        ("Embraer", "ERJ"): ("August 11, 1995", "ERJ family program"),
+        ("Embraer", "E-Jet"): ("February 19, 2002", "E-Jet family program"),
+        ("Embraer", "E-Jet E2"): ("May 23, 2016", "E-Jet E2 family program"),
+        ("ATR", "ATR 42/72"): ("August 16, 1984", "ATR family program"),
+        ("De Havilland Canada", "Dash 8"): ("June 20, 1983", "Dash 8 family program"),
+        ("Comac", "ARJ-21"): ("November 28, 2008", "ARJ21 program"),
+        ("Comac", "C919"): ("May 5, 2017", "C919 program"),
+    }
+    first_flight_by_slug = {
+        "b3xm-737-max-10": ("June 18, 2021", "737-10 model"),
+        "crjx-crj-1000": ("September 3, 2008", "CRJ1000 model"),
+        "e140-erj-140": ("June 27, 2000", "ERJ-140 model"),
+        "e175-e175": ("June 14, 2003", "E175 model"),
+        "e175-e175lr": ("June 14, 2003", "E175 model"),
+        "aj27-comac-arj-21-700": ("November 28, 2008", "ARJ21 model"),
+        "c919-comac-c919-100std": ("May 5, 2017", "C919 program"),
+        "c919-comac-c919-100er": ("May 5, 2017", "C919 program"),
+    }
     def commons_file(filename: str) -> dict:
         encoded = urllib.parse.quote(filename.replace(" ", "_"), safe="()_,-.")
         return {
@@ -958,7 +1028,7 @@ def load_aircraft_catalog() -> list[dict]:
         aircraft_class = "widebody" if wide else "regional" if regional else "narrowbody"
         range_group = "short" if range_km < 2778 else "medium" if range_km < 7408 else "long"
         photo_key = f"{current_maker}-{'wide' if wide else 'other'}" if current_maker in {"Airbus", "Boeing"} else current_maker
-        faa = faa_data.get(icao.upper(), {})
+        faa = faa_data.get(faa_aliases.get(icao.upper(), icao.upper()), {})
         wingspan = faa.get("Wingspan_ft_with_winglets_sharklets") or faa.get("Wingspan_ft_without_winglets_sharklets")
         slug = re.sub(r"[^a-z0-9]+", "-", f"{icao}-{variant}".lower()).strip("-")
         override_photo = model_photo_overrides.get(slug)
@@ -970,6 +1040,10 @@ def load_aircraft_catalog() -> list[dict]:
                 "url": photo_by_family.get((current_maker, current_family)) or photo_by_group[photo_key],
                 "source": f"https://commons.wikimedia.org/wiki/Category:{current_maker.replace(' ', '_')}_{current_family.replace(' ', '_')}",
             }
+        )
+        supplemental = supplemental_specs.get(slug, {})
+        first_flight, first_flight_scope = first_flight_by_slug.get(
+            slug, first_flight_by_family.get((current_maker, current_family), ("Not verified", "program"))
         )
         catalog.append({
             "slug": slug,
@@ -992,16 +1066,19 @@ def load_aircraft_catalog() -> list[dict]:
             "class_name": {"widebody": "Widebody", "narrowbody": "Narrowbody", "regional": "Regional"}[aircraft_class],
             "image": selected_image["url"],
             "image_source": selected_image["source"],
-            "faa_model": faa.get("Model_FAA"),
-            "engine_type": faa.get("Physical_Class_Engine"),
-            "engines": faa.get("Num_Engines"),
-            "wingspan_ft": wingspan,
-            "length_ft": faa.get("Length_ft"),
-            "height_ft": faa.get("Tail_Height_at_OEW_ft"),
-            "mtow_lb": faa.get("MTOW_lb"),
-            "landing_weight_lb": faa.get("MALW_lb"),
-            "wake_category": faa.get("ICAO_WTC"),
-            "approach_speed_knot": faa.get("Approach_Speed_knot"),
+            "faa_model": supplemental.get("faa_model") or faa.get("Model_FAA"),
+            "engine_type": supplemental.get("engine_type") or faa.get("Physical_Class_Engine"),
+            "engines": supplemental.get("engines") or faa.get("Num_Engines"),
+            "wingspan_ft": supplemental.get("wingspan_ft") or wingspan,
+            "length_ft": supplemental.get("length_ft") or faa.get("Length_ft"),
+            "height_ft": supplemental.get("height_ft") or faa.get("Tail_Height_at_OEW_ft"),
+            "mtow_lb": supplemental.get("mtow_lb") or faa.get("MTOW_lb"),
+            "landing_weight_lb": supplemental.get("landing_weight_lb") or faa.get("MALW_lb"),
+            "wake_category": supplemental.get("wake_category") or faa.get("ICAO_WTC"),
+            "approach_speed_knot": supplemental.get("approach_speed_knot") or faa.get("Approach_Speed_knot"),
+            "first_flight": first_flight,
+            "first_flight_scope": first_flight_scope,
+            "spec_source": supplemental.get("spec_source"),
         })
     return catalog
 

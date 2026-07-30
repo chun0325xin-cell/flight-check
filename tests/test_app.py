@@ -81,7 +81,15 @@ class FlightCheckTests(unittest.TestCase):
         self.assertEqual(detail.status_code, 200)
         self.assertIn(b"Maximum takeoff weight", detail.data)
         self.assertIn(b"Wingspan", detail.data)
+        self.assertIn(b"First flight", detail.data)
         self.assertIn(b"FAA Aircraft Characteristics Database", detail.data)
+
+        c919 = self.client.get("/aircraft/c919-comac-c919-100er")
+        self.assertEqual(c919.status_code, 200)
+        self.assertIn(b"May 5, 2017", c919.data)
+        self.assertIn(b"173,944", c919.data)
+        self.assertIn(b"117.5", c919.data)
+        self.assertIn(b"Manufacturer planning data", c919.data)
 
     def test_airbus_families_do_not_share_the_wrong_photo(self):
         aircraft = {item["name"]: item for item in flightcheck.load_aircraft_catalog()}
