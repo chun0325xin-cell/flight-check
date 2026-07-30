@@ -8,14 +8,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-aviation') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/pilotbrief-logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-logo') }}">
   <script defer src="{{ url_for('static', filename='js/app.js', v='20260730-i18n') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <a class="brand" href="{{ url_for('index') }}" aria-label="FlightCheck home">
-      <span class="brand-mark" aria-hidden="true">FC</span>
+      <img class="header-logo" src="{{ url_for('static', filename='images/pilotbrief-logo.png') }}" alt="" width="42" height="42">
       <span>Flight<strong>Check</strong></span>
     </a>
     <nav aria-label="Primary navigation">
