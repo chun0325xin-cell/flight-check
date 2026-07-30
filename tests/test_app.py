@@ -241,6 +241,12 @@ class FlightCheckTests(unittest.TestCase):
         self.assertGreater(result["average_wind_component_kt"], 0)
         self.assertIn("270", points[0]["forecast_wind"])
 
+    def test_route_map_uses_great_circle_segments(self):
+        script = (flightcheck.BASE_DIR / "static" / "js" / "route-map.js").read_text(encoding="utf-8")
+        self.assertIn("greatCircleLeg", script)
+        self.assertIn("GEODESIC ROUTE", script)
+        self.assertIn("flight-waypoint-label", script)
+
     def test_ai_route_designer_validates_calculates_and_saves(self):
         points = [
             {"id": "KJFK", "name": "John F Kennedy", "lat": 40.6413, "lon": -73.7781, "type": "Airport / station", "order": 1},

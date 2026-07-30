@@ -1,3 +1,63 @@
+function greatCircleLeg(start, end, steps = 32) {
+  const toRadians = (degrees) => degrees * Math.PI / 180;
+  const toDegrees = (radians) => radians * 180 / Math.PI;
+  const lat1 = toRadians(start.lat);
+  const lon1 = toRadians(start.lon);
+  const lat2 = toRadians(end.lat);
+  const lon2 = toRadians(end.lon);
+  const angularDistance = 2 * Math.asin(Math.sqrt(
+    Math.sin((lat2 - lat1) / 2) ** 2
+    + Math.cos(lat1) * Math.cos(lat2) * Math.sin((lon2 - lon1) / 2) ** 2
+  ));
+  if (angularDistance < 1e-9) return [[start.lat, start.lon]];
+
+  const points = [];
+  let previousLongitude = start.lon;
+  for (let index = 0; index <= steps; index += 1) {
+    const fraction = index / steps;
+    const a = Math.sin((1 - fraction) * angularDistance) / Math.sin(angularDistance);
+    const b = Math.sin(fraction * angularDistance) / Math.sin(angularDistance);
+    const x = a * Math.cos(lat1) * Math.cos(lon1) + b * Math.cos(lat2) * Math.cos(lon2);
+    const y = a * Math.cos(lat1) * Math.sin(lon1) + b * Math.cos(lat2) * Math.sin(lon2);
+    const z = a * Math.sin(lat1) + b * Math.sin(lat2);
+    const latitude = toDegrees(Math.atan2(z, Math.sqrt(x * x + y * y)));
+    let longitude = toDegrees(Math.atan2(y, x));
+    while (longitude - previousLongitude > 180) longitude -= 360;
+    while (longitude - previousLongitude < -180) longitude += 360;
+    points.push([latitude, longitude]);
+    previousLongitude = longitude;
+  }
+  return points;
+}
+
+function greatCircleRoute(points) {
+  const coordinates = [];
+  points.slice(0, -1).forEach((point, index) => {
+    const leg = greatCircleLeg(point, points[index + 1]);
+    coordinates.push(...(index === 0 ? leg : leg.slice(1)));
+  });
+  return coordinates;
+}
+
+function unwrapRouteLongitudes(points) {
+  let previousLongitude = Number(points[0].lon);
+  return points.map((point, index) => {
+    let longitude = Number(point.lon);
+    if (index > 0) {
+      while (longitude - previousLongitude > 180) longitude -= 360;
+      while (longitude - previousLongitude < -180) longitude += 360;
+    }
+    previousLongitude = longitude;
+    return { ...point, lon: longitude };
+  });
+}
+
+function escapeMapText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[character]));
+}
+
 function initializeRouteMap() {
   if (typeof window.L === "undefined") return;
   document.querySelectorAll("[data-route-map]").forEach((container) => {
@@ -22,7 +82,8 @@ function initializeRouteMap() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
 
-  const coordinates = points.map((point) => [point.lat, point.lon]);
+  const displayPoints = unwrapRouteLongitudes(points);
+  const coordinates = greatCircleRoute(displayPoints);
   window.L.polyline(coordinates, {
     color: "#0f6075",
     weight: 4,
@@ -30,21 +91,36 @@ function initializeRouteMap() {
     dashArray: "10 7",
   }).addTo(map);
 
-  points.forEach((point) => {
+  points.forEach((point, pointIndex) => {
     const icon = window.L.divIcon({
       className: "flight-waypoint-icon",
       html: `<span>${point.order}</span>`,
       iconSize: [34, 34],
       iconAnchor: [17, 17],
     });
-    window.L.marker([point.lat, point.lon], { icon })
+    const altitudeLabel = point.altitude
+      ? `${Number(point.altitude).toLocaleString()} ft`
+      : "ALT TBD";
+    window.L.marker([point.lat, displayPoints[pointIndex].lon], { icon })
       .addTo(map)
+      .bindTooltip(
+        `<b>${escapeMapText(point.id)}</b><span>${escapeMapText(altitudeLabel)}</span>`,
+        { permanent: true, direction: "top", offset: [0, -15], className: "flight-waypoint-label" }
+      )
       .bindPopup(
-        `<div class="map-popup"><small>WAYPOINT ${point.order}</small><strong>${point.id}</strong><span>${point.name}</span>${point.altitude ? `<b>${point.altitude.toLocaleString()} ft MSL</b>` : ""}${point.facility ? `<em>${point.facility}${point.frequency ? ` · ${point.frequency}` : ""}</em>` : ""}<code>${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}</code></div>`
+        `<div class="map-popup"><small>WAYPOINT ${escapeMapText(point.order)}</small><strong>${escapeMapText(point.id)}</strong><span>${escapeMapText(point.name)}</span>${point.altitude ? `<b>${Number(point.altitude).toLocaleString()} ft MSL</b>` : ""}${point.forecast_wind ? `<em>Forecast wind · ${escapeMapText(point.forecast_wind)}</em>` : ""}${point.facility ? `<em>${escapeMapText(point.facility)}${point.frequency ? ` · ${escapeMapText(point.frequency)}` : ""}</em>` : ""}<code>${Number(point.lat).toFixed(4)}, ${Number(point.lon).toFixed(4)}</code></div>`
       );
   });
 
-  map.fitBounds(coordinates, { padding: [45, 45], maxZoom: 9 });
+  const legend = window.L.control({ position: "bottomleft" });
+  legend.onAdd = () => {
+    const element = window.L.DomUtil.create("div", "route-map-legend");
+    element.innerHTML = "<b>GEODESIC ROUTE</b><span>Great-circle legs between verified waypoints</span>";
+    return element;
+  };
+  legend.addTo(map);
+
+  map.fitBounds(coordinates, { padding: [55, 55], maxZoom: 9 });
   });
 }
 
