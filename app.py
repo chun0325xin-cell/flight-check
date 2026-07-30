@@ -1159,6 +1159,11 @@ def about():
     return render_template("about.html")
 
 
+@app.get("/flight-tips")
+def flight_tips():
+    return render_template("flight_tips.html")
+
+
 @app.route("/plan", methods=["GET", "POST"])
 def route_planner():
     if request.method == "GET":

@@ -55,6 +55,15 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Build your risk picture", response.data)
         self.assertIn(b'id="assessment-form"', response.data)
 
+    def test_flight_tips_page_is_linked_and_loads(self):
+        home = self.client.get("/")
+        self.assertIn(b'href="/flight-tips"', home.data)
+        response = self.client.get("/flight-tips")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Small habits", response.data)
+        self.assertIn(b"IMSAFE", response.data)
+        self.assertIn(b"Learning aid only", response.data)
+
     def test_aircraft_library_has_filters_and_profiles(self):
         response = self.client.get("/aircraft")
         self.assertEqual(response.status_code, 200)

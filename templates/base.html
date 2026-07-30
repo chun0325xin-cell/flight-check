@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/pilotbrief-logo.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-logo') }}">
-  <script defer src="{{ url_for('static', filename='js/app.js', v='20260730-i18n') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-tips') }}">
+  <script defer src="{{ url_for('static', filename='js/app.js', v='20260730-tips') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -23,6 +23,7 @@
       <a href="{{ url_for('briefing') }}#assessment" data-i18n="nav_assess">Assess</a>
       <a href="{{ url_for('ai_route_planner') }}" data-i18n="nav_route">Route planner</a>
       <a href="{{ url_for('aircraft') }}" data-i18n="nav_aircraft">Aircraft</a>
+      <a href="{{ url_for('flight_tips') }}" data-i18n="nav_tips">Flight tips</a>
       <a href="{{ url_for('history') }}" data-i18n="nav_history">History</a>
       <a href="{{ url_for('about') }}" data-i18n="nav_about">About</a>
     </nav>

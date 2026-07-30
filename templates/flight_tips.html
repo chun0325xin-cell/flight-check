@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Flight Tips — FlightCheck{% endblock %}
+{% block content %}
+<section class="tips-hero">
+  <div>
+    <div class="eyebrow"><span></span><i data-i18n="tips_eyebrow">Student pilot field notes</i></div>
+    <h1 data-i18n-html="tips_title">Small habits.<br><em>Safer decisions.</em></h1>
+    <p data-i18n="tips_intro">Practical prompts for building a disciplined briefing routine—from the first weather look to the post-flight review.</p>
+  </div>
+  <aside aria-label="Flight tips overview">
+    <small>FIELD GUIDE / 01–06</small>
+    <strong>AVIATE<br>NAVIGATE<br>COMMUNICATE</strong>
+    <span>Brief · Verify · Decide</span>
+  </aside>
+</section>
+
+<section class="tips-grid" aria-label="Student pilot tips">
+  <article>
+    <span>01</span><small data-i18n="tips_before">Before the flight</small>
+    <h2>Start with the mission, not the route.</h2>
+    <ul>
+      <li>Define why the flight is being made and what would justify delaying it.</li>
+      <li>Set personal minimums before looking for reasons to continue.</li>
+      <li>Brief alternates, diversion points, fuel reserves, and a clear escape plan.</li>
+    </ul>
+  </article>
+  <article>
+    <span>02</span><small data-i18n="tips_weather">Weather thinking</small>
+    <h2>Look for the trend and the gaps.</h2>
+    <ul>
+      <li>Compare forecasts with current observations instead of reading one report alone.</li>
+      <li>Check winds at the surface and aloft, ceilings, visibility, convection, icing, and turbulence.</li>
+      <li>Ask what could change before arrival—and what evidence is still missing.</li>
+    </ul>
+  </article>
+  <article>
+    <span>03</span><small data-i18n="tips_aircraft">Aircraft &amp; fuel</small>
+    <h2>Know the margins you actually have.</h2>
+    <ul>
+      <li>Use the correct POH/AFM data for the exact aircraft, conditions, weight, and configuration.</li>
+      <li>Verify weight and balance, runway performance, fuel quantity, and required inspections.</li>
+      <li>Treat unexplained sounds, leaks, indications, or maintenance questions as unresolved.</li>
+    </ul>
+  </article>
+  <article>
+    <span>04</span><small data-i18n="tips_human">Pilot readiness</small>
+    <h2>Brief the pilot as carefully as the airplane.</h2>
+    <ul>
+      <li>Use IMSAFE: illness, medication, stress, alcohol, fatigue, and emotion/eating.</li>
+      <li>Notice pressure from passengers, schedules, cost, pride, or “get-there-itis.”</li>
+      <li>If the plan depends on everything going perfectly, increase the margin or change it.</li>
+    </ul>
+  </article>
+  <article>
+    <span>05</span><small data-i18n="tips_airborne">In the air</small>
+    <h2>Stay ahead of the airplane.</h2>
+    <ul>
+      <li>Keep the next frequency, altitude, heading, and decision point ready before you need them.</li>
+      <li>Recheck fuel, weather, position, and alternatives at planned checkpoints.</li>
+      <li>When workload rises: aviate first, then navigate, then communicate.</li>
+    </ul>
+  </article>
+  <article>
+    <span>06</span><small data-i18n="tips_after">After landing</small>
+    <h2>Turn experience into judgment.</h2>
+    <ul>
+      <li>Record what matched the plan, what changed, and which cues you noticed late.</li>
+      <li>Review fuel use, weather accuracy, radio work, navigation, and decision points.</li>
+      <li>Choose one specific habit to improve on the next flight.</li>
+    </ul>
+  </article>
+</section>
+
+<section class="tips-callout">
+  <div><small>THE 3P LOOP</small><strong>Perceive → Process → Perform</strong></div>
+  <p>Identify the hazard, evaluate how it affects this flight, then choose and continually reassess an action.</p>
+  <a class="button primary" href="{{ url_for('briefing') }}#assessment">Start a briefing <span>→</span></a>
+</section>
+<p class="tips-disclaimer" data-i18n="tips_boundary">Learning aid only. Always use current official weather, NOTAMs, charts, regulations, aircraft documents, ATC instructions, and guidance from your instructor.</p>
+{% endblock %}
