@@ -481,6 +481,62 @@ def generate_ai_route_candidate_without_api(data: dict) -> tuple[dict, str]:
     }, "FlightCheck fallback"
 
 
+def generate_ai_route_comparison(data: dict) -> tuple[list[dict], str]:
+    """Generate both comparison routes in one API request to fit hosted request limits."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        routes = []
+        for optimization in ("lowest_fuel", "fastest"):
+            candidate, _source = generate_ai_route_candidate_without_api({**data, "optimization": optimization})
+            candidate["optimization"] = optimization
+            routes.append(candidate)
+        return routes, "FlightCheck fallback — OpenAI not connected"
+
+    prompt = (
+        "Create two educational candidate routes for a student pilot in one response. Return JSON only with "
+        "a routes array containing exactly two objects. Each object must have optimization, summary, waypoints, "
+        "and warnings. One optimization must be lowest_fuel and the other fastest. Each waypoints array must "
+        "contain 2-8 objects with id, altitude_ft, and action, begin at the supplied departure, and end at the "
+        "supplied destination. Use real US airport, navaid, or fix identifiers only. Make the routes meaningfully "
+        "different when a legitimate tradeoff exists. Use supplied METAR/TAF records only and flag missing or "
+        "stale weather. Altitudes are planning targets, not clearances. Never invent radio frequencies or claim "
+        "a route is safe, legal, cleared, or globally optimal. Require verification of charts, NOTAMs, weather, "
+        "terrain, airspace, approved performance, loading, fuel, ATC instructions, and instructor review."
+    )
+    payload = {
+        "model": os.environ.get("OPENAI_MODEL", "gpt-5.6"),
+        "reasoning": {"effort": "low"},
+        "input": [
+            {"role": "developer", "content": prompt},
+            {"role": "user", "content": json.dumps(data)},
+        ],
+    }
+    api_request = urllib.request.Request(
+        "https://api.openai.com/v1/responses",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(api_request, timeout=25) as response:
+            result = json.loads(response_output_text(json.loads(response.read().decode("utf-8"))))
+        routes = result.get("routes", [])
+        by_optimization = {
+            item.get("optimization"): item
+            for item in routes if isinstance(item, dict) and isinstance(item.get("waypoints"), list)
+        }
+        if {"lowest_fuel", "fastest"} <= by_optimization.keys():
+            return [by_optimization["lowest_fuel"], by_optimization["fastest"]], f"OpenAI {payload['model']}"
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, TypeError):
+        pass
+    routes = []
+    for optimization in ("lowest_fuel", "fastest"):
+        candidate, _source = generate_ai_route_candidate_without_api({**data, "optimization": optimization})
+        candidate["optimization"] = optimization
+        routes.append(candidate)
+    return routes, "FlightCheck fallback — AI response unavailable"
+
+
 def haversine_nm(first: dict, second: dict) -> float:
     lat1, lat2 = math.radians(first["lat"]), math.radians(second["lat"])
     dlat = lat2 - lat1
@@ -896,10 +952,10 @@ def ai_route_planner():
         flash(str(exc), "error")
         return redirect(url_for("ai_route_planner"))
 
+    candidates, agent_source = generate_ai_route_comparison(data)
     plans = []
-    for optimization in ("lowest_fuel", "fastest"):
+    for optimization, candidate in zip(("lowest_fuel", "fastest"), candidates):
         route_input = {**data, "optimization": optimization}
-        candidate, agent_source = generate_ai_route_candidate(route_input)
         submitted = candidate.get("waypoints", [])
         identifiers = [str(item.get("id", "")).strip().upper() for item in submitted
                        if isinstance(item, dict) and str(item.get("id", "")).strip()][:8]

@@ -215,7 +215,11 @@ class FlightCheckTests(unittest.TestCase):
             ],
             "warnings": ["Verify all route information."],
         }
-        with patch("app.generate_ai_route_candidate", return_value=(candidate, "Test AI")), patch(
+        comparison = [
+            {**candidate, "optimization": "lowest_fuel"},
+            {**candidate, "optimization": "fastest"},
+        ]
+        with patch("app.generate_ai_route_comparison", return_value=(comparison, "Test AI")), patch(
             "app.resolve_route_points", return_value=(points, [])
         ):
             response = self.client.post(
