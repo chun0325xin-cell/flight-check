@@ -468,21 +468,34 @@ def fetch_metars(stations: list[str]) -> list[dict]:
         return []
 
 
+def great_circle_point(first: dict, second: dict, fraction: float) -> dict:
+    """Interpolate on a sphere so long routes follow their true geographic arc."""
+    lat1, lon1 = math.radians(first["lat"]), math.radians(first["lon"])
+    lat2, lon2 = math.radians(second["lat"]), math.radians(second["lon"])
+    start = (math.cos(lat1) * math.cos(lon1), math.cos(lat1) * math.sin(lon1), math.sin(lat1))
+    end = (math.cos(lat2) * math.cos(lon2), math.cos(lat2) * math.sin(lon2), math.sin(lat2))
+    angle = math.acos(max(-1.0, min(1.0, sum(a * b for a, b in zip(start, end)))))
+    if angle < 1e-10:
+        return {"lat": float(first["lat"]), "lon": float(first["lon"])}
+    start_weight = math.sin((1 - fraction) * angle) / math.sin(angle)
+    end_weight = math.sin(fraction * angle) / math.sin(angle)
+    x = start_weight * start[0] + end_weight * end[0]
+    y = start_weight * start[1] + end_weight * end[1]
+    z = start_weight * start[2] + end_weight * end[2]
+    return {
+        "lat": math.degrees(math.atan2(z, math.sqrt(x * x + y * y))),
+        "lon": ((math.degrees(math.atan2(y, x)) + 180) % 360) - 180,
+    }
+
+
 def interpolate_corridor(first: dict, second: dict, count: int = 7) -> list[dict]:
-    """Return evenly spaced points while taking the short path across the dateline."""
-    lon_delta = second["lon"] - first["lon"]
-    if lon_delta > 180:
-        lon_delta -= 360
-    elif lon_delta < -180:
-        lon_delta += 360
-    return [
-        {
-            "fraction": index / (count - 1),
-            "lat": round(first["lat"] + (second["lat"] - first["lat"]) * index / (count - 1), 4),
-            "lon": round(((first["lon"] + lon_delta * index / (count - 1) + 180) % 360) - 180, 4),
-        }
-        for index in range(count)
-    ]
+    """Return evenly spaced points on the shortest great-circle corridor."""
+    points = []
+    for index in range(count):
+        fraction = index / (count - 1)
+        point = great_circle_point(first, second, fraction)
+        points.append({"fraction": fraction, "lat": round(point["lat"], 4), "lon": round(point["lon"], 4)})
+    return points
 
 
 def fetch_route_winds(departure: str, destination: str, cruise_altitude: int) -> dict:
@@ -787,16 +800,7 @@ def local_fallback_routes(data: dict) -> list[dict]:
     }[aircraft_class]
 
     def interpolated_point(fraction: float) -> dict:
-        lon_delta = destination["lon"] - departure["lon"]
-        if lon_delta > 180:
-            lon_delta -= 360
-        elif lon_delta < -180:
-            lon_delta += 360
-        lon = ((departure["lon"] + lon_delta * fraction + 180) % 360) - 180
-        return {
-            "lat": departure["lat"] + (destination["lat"] - departure["lat"]) * fraction,
-            "lon": lon,
-        }
+        return great_circle_point(departure, destination, fraction)
 
     def altitude_for(fraction: float) -> tuple[int, str]:
         if fraction <= 0.22:
@@ -843,7 +847,8 @@ def local_fallback_routes(data: dict) -> list[dict]:
                 "profile. It does not establish an airway, procedure, clearance, or flyable route."
             ),
             "rationale": (
-                "This fallback uses a different geometric navaid pattern and altitude profile for comparison. "
+                "This fallback anchors its navaids to the shortest great-circle corridor and uses a different "
+                "geometric pattern and altitude profile for comparison. "
                 + (
                     "Current Open-Meteo model winds were supplied to the later time-and-fuel estimate, but the "
                     "navaid sequence itself remains geometric and must not be treated as an operational route."
@@ -884,7 +889,11 @@ def generate_ai_route_candidate(data: dict) -> tuple[dict, str]:
         "Create one educational candidate route for a student pilot. Return JSON only with keys summary, "
         "waypoints, and warnings. waypoints must contain 2-8 objects with id, altitude_ft, and action. "
         "Use real airport, navaid, or fix identifiers appropriate to the countries crossed, starting at departure "
-        "and ending at destination. "
+        "and ending at destination. Anchor the route to the supplied great_circle_reference: it is the shortest "
+        "geographic arc, especially important on polar and dateline-crossing routes. Do not choose a visually "
+        "straight east/west path on a flat map and do not assume an airspace closure that was not supplied. "
+        "If current airspace availability is unknown, keep the geographic candidate and add a warning that the "
+        "countries/FIRs crossed and current restrictions require official verification. "
         "Choose a simple candidate that matches the requested optimization: fastest means minimum practical "
         "distance; lowest_fuel means minimum estimated fuel using supplied cruise speed and fuel burn. "
         "Altitude values are planning targets in feet MSL, not clearances. Never invent radio frequencies, "
@@ -943,6 +952,11 @@ def generate_ai_route_comparison(data: dict) -> tuple[list[dict], str]:
         "sequences must be different. Each waypoints array must "
         "contain 2-8 objects with id, altitude_ft, and action, begin at the supplied departure, and end at the "
         "supplied destination. Use real airport, navaid, or fix identifiers appropriate to the countries crossed. "
+        "Anchor both candidates to the supplied great_circle_reference, which represents the shortest geographic "
+        "arc. This is essential for polar and dateline-crossing routes: do not choose a visually straight path on "
+        "a flat map. Do not assume airspace availability or a closure that is not in the supplied data. Keep the "
+        "geographic candidate near that corridor and explicitly warn that every country/FIR crossed and all current "
+        "restrictions require official verification. "
         "Make the routes meaningfully different. In rationale, explain why the lowest_fuel option may reduce "
         "fuel and why the fastest option may reduce time, discussing distance, waypoint count, altitude profile, "
         "and only the wind/weather evidence actually supplied. Use supplied METAR/TAF records only and flag "
@@ -1782,6 +1796,12 @@ def ai_route_planner():
             "general_aviation": 8500,
         }[selected_aircraft["class_group"]]
         data["route_winds_aloft"] = fetch_route_winds(departure, destination, cruise_altitude)
+        data["great_circle_reference"] = interpolate_corridor(
+            data["departure_airport"], data["destination_airport"], count=9
+        )
+        data["great_circle_distance_nm"] = round(haversine_nm(
+            data["departure_airport"], data["destination_airport"]
+        ), 1)
     except ValueError as exc:
         flash(str(exc), "error")
         return redirect(url_for("ai_route_planner"))
@@ -1853,6 +1873,10 @@ def ai_route_planner():
         if unresolved:
             warnings.append("Removed unverified AI waypoint identifiers: " + ", ".join(unresolved) + ".")
         warnings.append("Speed and fuel burn are aircraft-category comparison estimates; verify approved performance, winds, loading, reserves, weather, NOTAMs, terrain, airspace, and ATC routing.")
+        warnings.append(
+            "The geographic baseline follows the shortest great-circle corridor. It does not confirm permission "
+            "to enter any country or FIR; verify current overflight rights, prohibitions, restrictions, and ATC routing."
+        )
         if data["route_winds_aloft"]["available"]:
             wind_component = wind_result["average_wind_component_kt"]
             wind_word = "tailwind" if wind_component is not None and wind_component >= 0 else "headwind"

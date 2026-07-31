@@ -332,6 +332,17 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn("GEODESIC ROUTE", script)
         self.assertIn("flight-waypoint-label", script)
 
+    def test_beijing_to_new_york_corridor_uses_polar_great_circle(self):
+        airports = flightcheck.global_airports_by_code()
+        corridor = flightcheck.interpolate_corridor(airports["ZBAA"], airports["KJFK"], count=9)
+        self.assertGreater(max(point["lat"] for point in corridor), 75)
+        self.assertAlmostEqual(
+            corridor[0]["lat"], airports["ZBAA"]["lat"], places=3
+        )
+        self.assertAlmostEqual(
+            corridor[-1]["lat"], airports["KJFK"]["lat"], places=3
+        )
+
     def test_ai_route_designer_validates_calculates_and_saves(self):
         points = [
             {"id": "KJFK", "name": "John F Kennedy", "lat": 40.6413, "lon": -73.7781, "type": "Airport / station", "order": 1},

@@ -12,6 +12,7 @@ FlightCheck by PilotBrief Lab is a student-pilot preflight risk and planning wor
 - Guided four-step PAVE assessment
 - Educational route planner with wind-correction, groundspeed, ETE, and fuel estimates
 - Interactive route map with numbered airport, navaid, and fix markers
+- Spherical great-circle corridor generation for polar and dateline-crossing routes
 - Waypoint-by-waypoint navigation log for planned altitude, radio facility, frequency, and notes
 - Weather-factor workspace with optional live METAR observations
 - Built-in planning assistant with optional OpenAI Responses API enhancement
