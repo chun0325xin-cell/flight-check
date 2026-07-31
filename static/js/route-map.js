@@ -58,13 +58,28 @@ function escapeMapText(value) {
   }[character]));
 }
 
-function initializeRouteMap() {
+let landDataPromise;
+
+function loadLandData() {
+  if (!landDataPromise) {
+    landDataPromise = fetch("/static/vendor/maps/countries.geo.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("World map data unavailable");
+        return response.json();
+      })
+      .catch(() => null);
+  }
+  return landDataPromise;
+}
+
+async function initializeRouteMap() {
   if (typeof window.L === "undefined") {
     document.querySelectorAll("[data-route-map]").forEach((container) => {
       container.innerHTML = '<div class="route-map-error"><strong>Map could not load.</strong><span>The waypoint list below is still available. Refresh the page to try again.</span></div>';
     });
     return;
   }
+  const landData = await loadLandData();
   document.querySelectorAll("[data-route-map]").forEach((container) => {
   const dataElement = document.querySelector(`#${container.dataset.routeMap}`);
   if (!dataElement) return;
@@ -82,10 +97,7 @@ function initializeRouteMap() {
     scrollWheelZoom: false,
     zoomControl: true,
   });
-  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(map);
+  map.setView([25, 0], 1);
 
   const displayPoints = unwrapRouteLongitudes(points);
   const coordinates = greatCircleRoute(displayPoints);
@@ -128,6 +140,27 @@ function initializeRouteMap() {
   legend.addTo(map);
 
   map.fitBounds(coordinates, { padding: [55, 55], maxZoom: 9 });
+  if (landData) {
+    [-360, 0, 360].forEach((longitudeShift) => {
+      window.L.geoJSON(landData, {
+        interactive: false,
+        coordsToLatLng: (countryCoordinates) => window.L.latLng(
+          countryCoordinates[1], countryCoordinates[0] + longitudeShift
+        ),
+        style: {
+          color: "#76979b",
+          weight: 0.65,
+          fillColor: "#eef1e8",
+          fillOpacity: 1,
+        },
+      }).addTo(map).bringToBack();
+    });
+    map.attributionControl.addAttribution(
+      '<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>'
+    );
+  }
+  window.requestAnimationFrame(() => map.invalidateSize());
+  container.dataset.mapReady = "true";
   });
 }
 

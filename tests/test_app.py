@@ -339,6 +339,10 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn("vendor/leaflet/leaflet.js", template)
         self.assertIn("vendor/leaflet/leaflet.css", template)
         self.assertNotIn("unpkg.com/leaflet", template)
+        script = (flightcheck.BASE_DIR / "static" / "js" / "route-map.js").read_text(encoding="utf-8")
+        self.assertIn("/static/vendor/maps/countries.geo.json", script)
+        self.assertNotIn("tile.openstreetmap.org", script)
+        self.assertTrue((flightcheck.BASE_DIR / "static" / "vendor" / "maps" / "countries.geo.json").exists())
 
     def test_beijing_to_new_york_corridor_uses_polar_great_circle(self):
         airports = flightcheck.global_airports_by_code()

@@ -1,0 +1,5 @@
+Country boundary data is derived from Natural Earth and distributed in the
+public domain. The GeoJSON conversion was obtained from the world.geo.json
+project: https://github.com/johan/world.geo.json
+
+Natural Earth: https://www.naturalearthdata.com/

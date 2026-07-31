@@ -108,7 +108,8 @@ tests/                 Automated Flask tests
 - [Airbus 2018 published list prices](https://www.airbus.com/sites/g/files/jlcbta136/files/2021-07/new-airbus-list-prices-2018.pdf) historical commercial-aircraft price references
 - [The Airline Simulator Wiki aircraft list](https://the-airline-simulator.fandom.com/wiki/Category:Aircraft) initial commercial-aircraft model list supplied for the project
 - [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) optional route-candidate generation
-- [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/copyright) route maps
+- [Leaflet](https://leafletjs.com/) interactive route maps
+- [Natural Earth](https://www.naturalearthdata.com/) public-domain country boundaries for the locally served vector basemap
 - [Wikimedia Commons](https://commons.wikimedia.org/) aircraft photography
 - [Flask](https://flask.palletsprojects.com/) Python web framework
 - [Vercel](https://vercel.com/) public hosting
