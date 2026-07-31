@@ -64,3 +64,6 @@ footer{padding:42px clamp(24px,5vw,78px);display:flex;align-items:center;gap:35p
 .program-filter-bar{grid-template-columns:repeat(4,1fr) auto}
 @media(max-width:1000px){.program-filter-bar{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.program-filter-bar{grid-template-columns:1fr}}
+.program-card-top>.program-airline-logo{position:relative;width:54px;height:54px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:0 7px 18px rgba(5,33,43,.1)}
+.program-airline-logo img{position:absolute;inset:6px;width:40px;height:40px;object-fit:contain;background:#fff;z-index:2}
+.program-airline-logo i{position:absolute;inset:0;display:grid;place-items:center;background:var(--navy);color:var(--mint);font:800 10px Manrope;font-style:normal;z-index:1}
