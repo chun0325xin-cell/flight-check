@@ -2,6 +2,9 @@
 
 FlightCheck by PilotBrief Lab is a student-pilot preflight risk and planning workspace. It guides a user through the **PAVE** framework—Pilot, Aircraft, enVironment, and External pressures—then explains concerns, compares conditions with saved personal minimums, and stores the review privately for that browser session.
 
+- **Live application:** [pilotbrieflab.com](https://www.pilotbrieflab.com)
+- **Public source code:** [github.com/chun0325xin-cell/flight-check](https://github.com/chun0325xin-cell/flight-check)
+
 > **Safety note:** FlightCheck is a classroom project, not an official flight-planning tool. It does not replace an instructor, a weather briefing, FAA regulations, aircraft documents, or pilot-in-command judgment.
 
 ## Features
@@ -39,9 +42,11 @@ FlightCheck by PilotBrief Lab is a student-pilot preflight risk and planning wor
    pip install -r requirements.txt
    ```
 
-4. Start Flask:
+4. Start Flask (either command works):
 
    ```bash
+   python app.py
+   # or
    flask --app app run --debug
    ```
 
@@ -51,10 +56,11 @@ The SQLite database is created automatically at `instance/flightcheck.db`.
 
 ## Course point requirements
 
-FlightCheck completes two point requirements:
+FlightCheck completes all three optional point requirements:
 
-1. **Persistent data store:** SQLite stores assessments, route exercises, and personal minimums. Database setup and safe additive migrations are in `init_db()`.
-2. **Meaningful POST usage:** `POST /assess` validates the submitted briefing, runs the PAVE-based evaluation logic, saves the result, and renders tailored feedback. `POST /history/<id>/delete` also changes persistent state.
+1. **Public hosting:** The application is deployed at [pilotbrieflab.com](https://www.pilotbrieflab.com) through Vercel.
+2. **Persistent data store:** SQLite stores assessments, route exercises, and personal minimums. Database setup and safe additive migrations are in `init_db()`.
+3. **Meaningful POST usage:** `POST /assess` validates the submitted briefing, runs the PAVE-based evaluation logic, saves the result, and renders tailored feedback. `POST /history/<id>/delete` also changes persistent state.
 
 `POST /plan` provides another substantive workflow: it validates a proposed route, solves an educational wind triangle, estimates time and fuel, retrieves recent METAR observations when available, generates a planning-assistant brief, and saves the route plan.
 
@@ -98,9 +104,13 @@ tests/                 Automated Flask tests
 - [AviationWeather.gov](https://aviationweather.gov/data/api/) aviation weather and identifier validation
 - [Open-Meteo](https://open-meteo.com/en/docs) global pressure-level wind forecasts
 - [FAA Aircraft Characteristics Database](https://www.faa.gov/airports/engineering/aircraft_char_database) aircraft specifications
+- [Airbus 2018 published list prices](https://www.airbus.com/sites/g/files/jlcbta136/files/2021-07/new-airbus-list-prices-2018.pdf) historical commercial-aircraft price references
+- [The Airline Simulator Wiki aircraft list](https://the-airline-simulator.fandom.com/wiki/Category:Aircraft) initial commercial-aircraft model list supplied for the project
 - [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) optional route-candidate generation
 - [Leaflet](https://leafletjs.com/) and [OpenStreetMap](https://www.openstreetmap.org/copyright) route maps
 - [Wikimedia Commons](https://commons.wikimedia.org/) aircraft photography
+- [Flask](https://flask.palletsprojects.com/) Python web framework
+- [Vercel](https://vercel.com/) public hosting
 
 ## Possible future improvements
 
