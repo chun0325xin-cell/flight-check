@@ -46,12 +46,16 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b'class="planner-cta"', response.data)
         self.assertIn(b"Route planner", response.data)
         self.assertIn(b"Start briefing", response.data)
-        self.assertNotIn(b'class="button landing-primary"', response.data)
+        self.assertIn(
+            b'class="button landing-primary" href="/ai-plan"', response.data
+        )
         self.assertIn(b"images/pilotbrief-logo.png", response.data)
         self.assertIn(b'class="header-logo"', response.data)
         self.assertIn(b"favicon.ico", response.data)
         self.assertIn(b"apple-touch-icon.png", response.data)
-        self.assertIn(b'class="button landing-secondary landing-tips-button"', response.data)
+        self.assertIn(
+            b'class="button landing-secondary" href="/flight-tips"', response.data
+        )
 
     def test_briefing_page_contains_assessment(self):
         response = self.client.get("/briefing")
