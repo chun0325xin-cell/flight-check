@@ -1241,6 +1241,11 @@ def flight_tips():
     return render_template("flight_tips.html")
 
 
+@app.get("/programs")
+def pilot_programs():
+    return render_template("programs.html")
+
+
 @app.route("/plan", methods=["GET", "POST"])
 def route_planner():
     if request.method == "GET":

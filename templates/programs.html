@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Pilot Programs — FlightCheck{% endblock %}
+{% block content %}
+<section class="programs-hero">
+  <div class="eyebrow"><span></span><i data-i18n="programs_eyebrow">Verified career pathways</i></div>
+  <h1 data-i18n-html="programs_title">Find your route<br><em>to the flight deck.</em></h1>
+  <p data-i18n="programs_intro">Compare airline cadet programs, academies, and pilot pathways. FlightCheck provides a short summary and sends every applicant to the official source.</p>
+</section>
+<section class="programs-library">
+  <div class="program-filter-bar" aria-label="Filter pilot programs">
+    <label>Region<select id="program-region"><option value="all">All regions</option><option value="asia">Asia</option><option value="europe">Europe</option><option value="north-america">North America</option><option value="australia">Australia</option></select></label>
+    <label>Program type<select id="program-type"><option value="all">All types</option><option value="cadet">Cadet / ab-initio</option><option value="academy">Airline academy</option><option value="pathway">Career pathway</option></select></label>
+    <label>Status<select id="program-status"><option value="all">All statuses</option><option value="open">Open now</option><option value="year-round">Open year-round</option><option value="closed">Currently closed</option></select></label>
+    <span id="program-count" aria-live="polite">6 programs</span>
+  </div>
+  <div class="program-grid">
+    <article class="program-card" data-region="asia" data-type="cadet" data-status="year-round">
+      <div class="program-card-top"><span>CX</span><b>OPEN YEAR-ROUND</b></div><small>HONG KONG / ASIA</small><h2>Cathay Pacific<br>Cadet Pilot Programme</h2>
+      <p>Sponsored approximately 80-week training pathway requiring no previous flying experience. Work-eligibility, education, English, medical, and background requirements apply.</p>
+      <dl><div><dt>Experience</dt><dd>0 hours accepted</dd></div><div><dt>Path</dt><dd>Cadet → Second Officer</dd></div></dl>
+      <a href="https://careers.cathaypacific.com/en/careers/our-teams/pilot/pilot-detail-page" target="_blank" rel="noopener">View official program <span>↗</span></a>
+    </article>
+    <article class="program-card" data-region="asia" data-type="cadet" data-status="open">
+      <div class="program-card-top"><span>SQ</span><b>OPEN</b></div><small>SINGAPORE / ASIA</small><h2>Singapore Airlines<br>Ab Initio Cadet Pilot</h2>
+      <p>An airline cadet opportunity listed on Singapore Airlines’ official pilot careers portal. Confirm current nationality, education, medical, and service requirements before applying.</p>
+      <dl><div><dt>Experience</dt><dd>Ab-initio pathway</dd></div><div><dt>Source date</dt><dd>July 2026 listing</dd></div></dl>
+      <a href="https://careers.singaporeair.com/sia/go/Pilots/689044/" target="_blank" rel="noopener">View official program <span>↗</span></a>
+    </article>
+    <article class="program-card" data-region="north-america" data-type="pathway" data-status="open">
+      <div class="program-card-top"><span>UA</span><b>OPEN</b></div><small>UNITED STATES</small><h2>United Airlines<br>Aviate</h2>
+      <p>A career-development pathway for aspiring and established pilots. Aviate itself is free, but participants remain responsible for training costs; multiple entry points are available.</p>
+      <dl><div><dt>Type</dt><dd>Career pathway</dd></div><div><dt>Training cost</dt><dd>Participant-funded</dd></div></dl>
+      <a href="https://unitedaviate.com/" target="_blank" rel="noopener">View official program <span>↗</span></a>
+    </article>
+    <article class="program-card" data-region="europe" data-type="academy" data-status="open">
+      <div class="program-card-top"><span>LH</span><b>OPEN</b></div><small>GERMANY / SWITZERLAND</small><h2>Lufthansa Group<br>European Flight Academy</h2>
+      <p>Approximately two-year ab-initio professional pilot training with no prior flying knowledge required and priority access to Lufthansa Group cockpit opportunities.</p>
+      <dl><div><dt>Experience</dt><dd>No prior hours required</dd></div><div><dt>Type</dt><dd>Airline academy</dd></div></dl>
+      <a href="https://www.lufthansa-aviation-training.com/en/web/european-flight-academy/apply-now" target="_blank" rel="noopener">View official program <span>↗</span></a>
+    </article>
+    <article class="program-card" data-region="australia" data-type="academy" data-status="open">
+      <div class="program-card-top"><span>QF</span><b>COURSES OPEN</b></div><small>AUSTRALIA</small><h2>Qantas Group<br>Pilot Academy</h2>
+      <p>Commercial pilot training with course applications open. This is not a funded cadetship and graduation does not guarantee employment; eligible graduates may receive an assessment opportunity.</p>
+      <dl><div><dt>Type</dt><dd>Training academy</dd></div><div><dt>Job guarantee</dt><dd>No</dd></div></dl>
+      <a href="https://www.qantas.com/en-au/about-us/pilot-academy" target="_blank" rel="noopener">View official program <span>↗</span></a>
+    </article>
+    <article class="program-card is-closed" data-region="europe" data-type="cadet" data-status="closed">
+      <div class="program-card-top"><span>BA</span><b>CLOSED</b></div><small>UNITED KINGDOM</small><h2>British Airways<br>Speedbird Pilot Academy</h2>
+      <p>A fully funded cadet training pathway. The 2026 application window has closed; use the official Future Pilots page and job alerts to watch for the next intake.</p>
+      <dl><div><dt>Funding</dt><dd>Fully funded</dd></div><div><dt>2026 status</dt><dd>Closed</dd></div></dl>
+      <a href="https://careers.ba.com/en/future-pilots" target="_blank" rel="noopener">View official program <span>↗</span></a>
+    </article>
+  </div>
+  <div class="program-empty" id="program-empty" hidden><strong>No matching programs.</strong><p>Try changing one of the filters.</p></div>
+  <p class="program-disclaimer"><strong>Independent directory.</strong> FlightCheck is not affiliated with or endorsed by these airlines. Program details can change without notice. Verify eligibility, cost, deadlines, and application status on the official airline website. Last reviewed July 30, 2026.</p>
+</section>
+{% endblock %}

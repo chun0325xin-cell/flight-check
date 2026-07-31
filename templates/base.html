@@ -11,8 +11,8 @@
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico', v='20260730') }}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32.png', v='20260730') }}">
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png', v='20260730') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-tips') }}">
-  <script defer src="{{ url_for('static', filename='js/app.js', v='20260730-tips') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260730-programs') }}">
+  <script defer src="{{ url_for('static', filename='js/app.js', v='20260730-programs') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -25,6 +25,7 @@
       <a href="{{ url_for('briefing') }}#assessment" data-i18n="nav_assess">Assess</a>
       <a href="{{ url_for('ai_route_planner') }}" data-i18n="nav_route">Route planner</a>
       <a href="{{ url_for('aircraft') }}" data-i18n="nav_aircraft">Aircraft</a>
+      <a href="{{ url_for('pilot_programs') }}" data-i18n="nav_programs">Programs</a>
       <a href="{{ url_for('flight_tips') }}" data-i18n="nav_tips">Flight tips</a>
       <a href="{{ url_for('history') }}" data-i18n="nav_history">History</a>
       <a href="{{ url_for('about') }}" data-i18n="nav_about">About</a>

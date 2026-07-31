@@ -68,6 +68,18 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"IMSAFE", response.data)
         self.assertIn(b"Learning aid only", response.data)
 
+    def test_pilot_program_directory_links_to_official_sources(self):
+        home = self.client.get("/")
+        self.assertIn(b'class="button landing-secondary landing-programs-button"', home.data)
+        response = self.client.get("/programs")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Cathay Pacific", response.data)
+        self.assertIn(b"Singapore Airlines", response.data)
+        self.assertIn(b"United Airlines", response.data)
+        self.assertIn(b"British Airways", response.data)
+        self.assertIn(b"Independent directory", response.data)
+        self.assertIn(b'id="program-region"', response.data)
+
     def test_aircraft_library_has_filters_and_profiles(self):
         response = self.client.get("/aircraft")
         self.assertEqual(response.status_code, 200)

@@ -3,7 +3,7 @@ const form = document.querySelector("#assessment-form");
 const translations = {
   en: {
     nav_assess: "Assess", nav_route: "Route planner", nav_ai: "AI designer", nav_aircraft: "Aircraft", nav_history: "History",
-    nav_about: "About", nav_tips: "Flight tips", nav_ai_route: "AI route", network_label: "FLIGHTCHECK AVIATION NETWORK",
+    nav_about: "About", nav_tips: "Flight tips", nav_programs: "Programs", nav_ai_route: "AI route", network_label: "FLIGHTCHECK AVIATION NETWORK",
     network_status: "PLANNING SYSTEM ONLINE", ai_eyebrow: "AI-assisted route exploration",
     ai_title: "Tell it the mission.<br>Compare the tradeoff.",
     ai_intro: "Enter the airports, aircraft, and loading. FlightCheck asks the AI for a candidate optimized for lowest estimated fuel or fastest time, then validates each waypoint before placing it on the map.",
@@ -26,11 +26,13 @@ const translations = {
     tips_intro: "Practical prompts for building a disciplined briefing routine—from the first weather look to the post-flight review.",
     tips_before: "Before the flight", tips_weather: "Weather thinking", tips_aircraft: "Aircraft & fuel",
     tips_human: "Pilot readiness", tips_airborne: "In the air", tips_after: "After landing",
-    tips_boundary: "Learning aid only. Always use current official weather, NOTAMs, charts, regulations, aircraft documents, ATC instructions, and guidance from your instructor."
+    tips_boundary: "Learning aid only. Always use current official weather, NOTAMs, charts, regulations, aircraft documents, ATC instructions, and guidance from your instructor.",
+    programs_eyebrow: "VERIFIED CAREER PATHWAYS", programs_title: "Find your route<br><em>to the flight deck.</em>",
+    programs_intro: "Compare airline cadet programs, academies, and pilot pathways. FlightCheck provides a short summary and sends every applicant to the official source."
   },
   zh: {
     nav_assess: "风险评估", nav_route: "手动航线", nav_ai: "AI 航线设计", nav_aircraft: "飞机资料", nav_history: "历史记录",
-    nav_about: "关于", nav_tips: "飞行提示", nav_ai_route: "AI 航线", network_label: "FLIGHTCHECK 航空网络",
+    nav_about: "关于", nav_tips: "飞行提示", nav_programs: "培养计划", nav_ai_route: "AI 航线", network_label: "FLIGHTCHECK 航空网络",
     network_status: "规划系统在线", ai_eyebrow: "AI 辅助航线探索",
     ai_title: "输入飞行任务。<br>比较时间与燃油。",
     ai_intro: "输入起飞机场、到达机场、机型和载重。FlightCheck 会根据最低燃油或最快时间生成候选航线，并验证每一个航点后再显示在地图上。",
@@ -53,11 +55,13 @@ const translations = {
     tips_intro: "从第一次查看天气到飞行后复盘，使用这些实用提示建立更有纪律的简报流程。",
     tips_before: "飞行之前", tips_weather: "天气判断", tips_aircraft: "飞机与燃油",
     tips_human: "飞行员状态", tips_airborne: "飞行途中", tips_after: "着陆以后",
-    tips_boundary: "仅作为学习辅助。请始终使用最新的官方天气、NOTAM、航图、法规、飞机文件、空管指令以及教员指导。"
+    tips_boundary: "仅作为学习辅助。请始终使用最新的官方天气、NOTAM、航图、法规、飞机文件、空管指令以及教员指导。",
+    programs_eyebrow: "已核实的飞行员职业路径", programs_title: "找到通往<br><em>驾驶舱的路线。</em>",
+    programs_intro: "比较不同航空公司的飞行学员计划、飞行学院与职业通道。FlightCheck 提供简短摘要，并将申请者带到官方页面。"
   },
   es: {
     nav_assess: "Evaluar", nav_route: "Planificador", nav_ai: "Diseñador IA", nav_aircraft: "Aeronaves", nav_history: "Historial",
-    nav_about: "Acerca de", nav_tips: "Consejos", nav_ai_route: "Ruta IA", network_label: "RED DE AVIACIÓN FLIGHTCHECK",
+    nav_about: "Acerca de", nav_tips: "Consejos", nav_programs: "Programas", nav_ai_route: "Ruta IA", network_label: "RED DE AVIACIÓN FLIGHTCHECK",
     network_status: "SISTEMA DE PLANIFICACIÓN ACTIVO", ai_eyebrow: "Exploración de rutas asistida por IA",
     ai_title: "Define la misión.<br>Compara el resultado.",
     ai_intro: "Introduce los aeropuertos, la aeronave y la carga. FlightCheck solicita una ruta candidata optimizada por combustible o tiempo y valida cada punto antes de mostrarlo en el mapa.",
@@ -80,7 +84,9 @@ const translations = {
     tips_intro: "Sugerencias prácticas para crear una rutina disciplinada, desde el primer vistazo al tiempo hasta la revisión posterior.",
     tips_before: "Antes del vuelo", tips_weather: "Análisis meteorológico", tips_aircraft: "Aeronave y combustible",
     tips_human: "Preparación del piloto", tips_airborne: "En vuelo", tips_after: "Después de aterrizar",
-    tips_boundary: "Solo como ayuda educativa. Utiliza siempre meteorología oficial, NOTAM, cartas, reglamentos, documentos de la aeronave, instrucciones ATC y la orientación de tu instructor."
+    tips_boundary: "Solo como ayuda educativa. Utiliza siempre meteorología oficial, NOTAM, cartas, reglamentos, documentos de la aeronave, instrucciones ATC y la orientación de tu instructor.",
+    programs_eyebrow: "RUTAS PROFESIONALES VERIFICADAS", programs_title: "Encuentra tu ruta<br><em>a la cabina.</em>",
+    programs_intro: "Compara programas de cadetes, academias y rutas profesionales. FlightCheck ofrece un resumen y dirige cada solicitud a la fuente oficial."
   }
 };
 
@@ -396,3 +402,23 @@ if (aiRouteForm) {
     submit.innerHTML = `<i>${loadingCopy}</i><span>◌</span>`;
   });
 }
+
+const programFilters = ["program-region", "program-type", "program-status"].map((id) => document.querySelector(`#${id}`));
+const programCards = [...document.querySelectorAll(".program-card")];
+function filterPrograms() {
+  if (!programCards.length) return;
+  const [region, type, status] = programFilters.map((filter) => filter?.value || "all");
+  let visible = 0;
+  programCards.forEach((card) => {
+    const show = (region === "all" || card.dataset.region === region)
+      && (type === "all" || card.dataset.type === type)
+      && (status === "all" || card.dataset.status === status);
+    card.hidden = !show;
+    if (show) visible += 1;
+  });
+  const count = document.querySelector("#program-count");
+  const empty = document.querySelector("#program-empty");
+  if (count) count.textContent = `${visible} program${visible === 1 ? "" : "s"}`;
+  if (empty) empty.hidden = visible !== 0;
+}
+programFilters.forEach((filter) => filter?.addEventListener("change", filterPrograms));
