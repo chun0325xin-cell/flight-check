@@ -99,8 +99,15 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"A318-100", response.data)
         self.assertIn(b"737 MAX 7", response.data)
         self.assertIn(b"Comac C919-100ER", response.data)
-        self.assertIn(b"74</strong>", response.data)
+        self.assertIn(b"82</strong>", response.data)
         self.assertIn(b"Widebody", response.data)
+        self.assertIn(b"Training / GA", response.data)
+        for aircraft_name in (
+            b"Cessna 152", b"Cessna 172 Skyhawk", b"Piper Warrior III",
+            b"Piper Archer DX", b"Diamond DA20-C1", b"Diamond DA40 NG",
+            b"Cirrus SR20", b"Beechcraft Bonanza G36",
+        ):
+            self.assertIn(aircraft_name, response.data)
         self.assertIn(b"/aircraft/a359-a350-900", response.data)
         detail = self.client.get("/aircraft/a359-a350-900")
         self.assertEqual(detail.status_code, 200)
@@ -115,6 +122,12 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"173,944", c919.data)
         self.assertIn(b"117.5", c919.data)
         self.assertIn(b"Manufacturer planning data", c919.data)
+
+        cessna = self.client.get("/aircraft/c172-cessna-172-skyhawk")
+        self.assertEqual(cessna.status_code, 200)
+        self.assertIn(b"June 12, 1955", cessna.data)
+        self.assertIn(b"2,550", cessna.data)
+        self.assertIn(b"Training / GA", cessna.data)
 
     def test_airbus_families_do_not_share_the_wrong_photo(self):
         aircraft = {item["name"]: item for item in flightcheck.load_aircraft_catalog()}

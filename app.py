@@ -627,7 +627,10 @@ def local_fallback_routes(data: dict) -> list[dict]:
         (item["class_group"] for item in load_aircraft_catalog() if item["name"] == data["aircraft_type"]),
         "narrowbody",
     )
-    cruise_altitude = {"widebody": 37000, "narrowbody": 35000, "regional": 25000}[aircraft_class]
+    cruise_altitude = {
+        "widebody": 37000, "narrowbody": 35000, "regional": 25000,
+        "general_aviation": 8500,
+    }[aircraft_class]
 
     def interpolated_point(fraction: float) -> dict:
         lon_delta = destination["lon"] - departure["lon"]
@@ -843,7 +846,11 @@ def present_ai_route(row: sqlite3.Row | dict) -> dict:
 
 
 def load_aircraft_catalog() -> list[dict]:
-    manufacturers = {"Airbus", "Boeing", "Bombardier", "Embraer", "ATR", "De Havilland Canada", "Comac"}
+    manufacturers = {
+        "Airbus", "Boeing", "Bombardier", "Embraer", "ATR",
+        "De Havilland Canada", "Comac", "Cessna", "Piper", "Diamond",
+        "Cirrus", "Beechcraft",
+    }
     photo_by_group = {
         "Airbus-wide": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/EGLF_-_Airbus_A350-941_-_F-WZNW.jpg/330px-EGLF_-_Airbus_A350-941_-_F-WZNW.jpg",
         "Airbus-other": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Airbus_A320-214%2C_Airbus_Industrie_JP7617615.jpg/330px-Airbus_A320-214%2C_Airbus_Industrie_JP7617615.jpg",
@@ -854,6 +861,11 @@ def load_aircraft_catalog() -> list[dict]:
         "ATR": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/F-WWEZ_%28948%29_ATR.72-212A%28500%29_FlyFireFly_TLS_30AUG11_%286097869500%29_%28cropped%29.jpg/330px-F-WWEZ_%28948%29_ATR.72-212A%28500%29_FlyFireFly_TLS_30AUG11_%286097869500%29_%28cropped%29.jpg",
         "De Havilland Canada": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Hamburg_Airport_Wider%C3%B8e_Bombardier_DHC-8-402Q_LN-WDR_%28DSC08713%29.jpg/330px-Hamburg_Airport_Wider%C3%B8e_Bombardier_DHC-8-402Q_LN-WDR_%28DSC08713%29.jpg",
         "Comac": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/B-919A%40PEK_%2820221226151722%29.jpg/330px-B-919A%40PEK_%2820221226151722%29.jpg",
+        "Cessna": "https://upload.wikimedia.org/wikipedia/commons/6/63/G-WACG_%2828709174893%29.jpg",
+        "Piper": "https://upload.wikimedia.org/wikipedia/commons/4/40/Piper_Warrior_III%2C_Mainz_%28P1090489%29.jpg",
+        "Diamond": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Diamond_DA40_%28N505JF%29.jpg",
+        "Cirrus": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Cirrus_SR20-G2%2C_Private_JP5979582.jpg",
+        "Beechcraft": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Beech_G36_Bonanza_ZS-BON_%2826005439470%29.jpg",
     }
     photo_by_family = {
         ("Airbus", "A220"): "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Airbus_A220-300.jpg/330px-Airbus_A220-300.jpg",
@@ -931,6 +943,13 @@ def load_aircraft_catalog() -> list[dict]:
         ("De Havilland Canada", "Dash 8"): ("June 20, 1983", "Dash 8 family program"),
         ("Comac", "ARJ-21"): ("November 28, 2008", "ARJ21 program"),
         ("Comac", "C919"): ("May 5, 2017", "C919 program"),
+        ("Cessna", "152"): ("September 12, 1977", "Cessna 152 program"),
+        ("Cessna", "172 Skyhawk"): ("June 12, 1955", "Cessna 172 program"),
+        ("Piper", "PA-28"): ("January 14, 1960", "PA-28 family program"),
+        ("Diamond", "DA20"): ("1991", "DA20 program"),
+        ("Diamond", "DA40"): ("November 5, 1997", "DA40 program"),
+        ("Cirrus", "SR20"): ("March 21, 1995", "SR20 program"),
+        ("Beechcraft", "Bonanza"): ("December 22, 1945", "Bonanza family program"),
     }
     first_flight_by_slug = {
         "b3xm-737-max-10": ("June 18, 2021", "737-10 model"),
@@ -988,6 +1007,14 @@ def load_aircraft_catalog() -> list[dict]:
         "dh8b-de-haviland-canada-dash-8-q200": commons_file("De Havilland Canada DHC-8-200 (UNI Air).jpg"),
         "dh8c-de-haviland-canada-dash-8-q300": commons_file("QantasLink Dash-8 Q300.jpg"),
         "aj27-comac-arj-21-700": commons_file("Comac ARJ21-700.jpg"),
+        "c152-cessna-152": commons_file("G-WACG (28709174893).jpg"),
+        "c172-cessna-172-skyhawk": commons_file("2001 N793SP Cessna 172S Skyhawk Side Profile at Doylestown Airport, Pennsylvania.jpg"),
+        "p28a-piper-warrior-iii": commons_file("Piper Warrior III, Mainz (P1090489).jpg"),
+        "p28a-piper-archer-dx": commons_file("Piper Archer, Strausberg (P1090023).jpg"),
+        "dv20-diamond-da20-c1": commons_file("Diamond DA20-C1 N146DR (26503545620).jpg"),
+        "da40-diamond-da40-ng": commons_file("Diamond DA40 Diamond Star N808ER Leaving VGT.jpg"),
+        "sr20-cirrus-sr20": commons_file("Cirrus SR20-G2, Private JP5979582.jpg"),
+        "be36-beechcraft-bonanza-g36": commons_file("Beech G36 Bonanza ZS-BON (26005439470).jpg"),
     }
     # Commons search can occasionally return a nearby family member. Never show
     # those known mismatches as if they were the requested aircraft variant.
@@ -1025,7 +1052,11 @@ def load_aircraft_catalog() -> list[dict]:
         regional = current_maker in {"Bombardier", "Embraer", "ATR", "De Havilland Canada"} or (
             current_maker == "Comac" and current_family == "ARJ-21"
         )
-        aircraft_class = "widebody" if wide else "regional" if regional else "narrowbody"
+        general_aviation = current_maker in {"Cessna", "Piper", "Diamond", "Cirrus", "Beechcraft"}
+        aircraft_class = (
+            "widebody" if wide else "regional" if regional
+            else "general_aviation" if general_aviation else "narrowbody"
+        )
         range_group = "short" if range_km < 2778 else "medium" if range_km < 7408 else "long"
         photo_key = f"{current_maker}-{'wide' if wide else 'other'}" if current_maker in {"Airbus", "Boeing"} else current_maker
         faa = faa_data.get(faa_aliases.get(icao.upper(), icao.upper()), {})
@@ -1063,7 +1094,10 @@ def load_aircraft_catalog() -> list[dict]:
             "seats": seats,
             "price": price,
             "class_group": aircraft_class,
-            "class_name": {"widebody": "Widebody", "narrowbody": "Narrowbody", "regional": "Regional"}[aircraft_class],
+            "class_name": {
+                "widebody": "Widebody", "narrowbody": "Narrowbody",
+                "regional": "Regional", "general_aviation": "Training / GA",
+            }[aircraft_class],
             "image": selected_image["url"],
             "image_source": selected_image["source"],
             "faa_model": supplemental.get("faa_model") or faa.get("Model_FAA"),
@@ -1351,7 +1385,8 @@ def ai_route_planner():
             raise ValueError("Choose a manufacturer, aircraft family, and specific model from the list.")
         payload_weight = 0.0
         cruise_speed, fuel_burn = {
-            "widebody": (485, 1800), "narrowbody": (445, 750), "regional": (315, 300)
+            "widebody": (485, 1800), "narrowbody": (445, 750),
+            "regional": (315, 300), "general_aviation": (115, 10)
         }[selected_aircraft["class_group"]]
         max_gross_weight = float(selected_aircraft["mtow_lb"] or max(payload_weight * 2, 2500))
         if payload_weight > max_gross_weight:
@@ -1371,7 +1406,10 @@ def ai_route_planner():
             "departure_airport": global_airports_by_code()[departure],
             "destination_airport": global_airports_by_code()[destination],
         }
-        cruise_altitude = {"widebody": 35000, "narrowbody": 33000, "regional": 24000}[selected_aircraft["class_group"]]
+        cruise_altitude = {
+            "widebody": 35000, "narrowbody": 33000, "regional": 24000,
+            "general_aviation": 8500,
+        }[selected_aircraft["class_group"]]
         data["route_winds_aloft"] = fetch_route_winds(departure, destination, cruise_altitude)
     except ValueError as exc:
         flash(str(exc), "error")

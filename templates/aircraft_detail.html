@@ -15,8 +15,8 @@
   <div class="aircraft-spec-heading"><div><small>FAA + MANUFACTURER DATA + GAME MASTER LIST</small><h2>Aircraft at a glance.</h2></div><p>Dimensions and weights come from FAA data where available, with manufacturer planning documents filling verified gaps. First-flight dates identify the exact model when verified; otherwise, the card clearly labels the aircraft-family program date. Game capacity, range, and price come from The Airline Simulator list you supplied.</p></div>
   <div class="aircraft-spec-grid">
     <div><small>First flight</small><strong class="date-value">{{ aircraft.first_flight }}</strong><span>{{ aircraft.first_flight_scope }}</span></div>
-    <div><small>Game maximum seats</small><strong>{{ aircraft.seats }}</strong><span>passengers</span></div>
-    <div><small>Game range</small><strong>{{ aircraft.range_km }}</strong><span>km · {{ aircraft.range_nm }} nm</span></div>
+    <div><small>{% if aircraft.price == "—" %}Maximum occupants{% else %}Game maximum seats{% endif %}</small><strong>{{ aircraft.seats }}</strong><span>{% if aircraft.price == "—" %}people{% else %}passengers{% endif %}</span></div>
+    <div><small>{% if aircraft.price == "—" %}Reference range{% else %}Game range{% endif %}</small><strong>{{ aircraft.range_km }}</strong><span>km · {{ aircraft.range_nm }} nm</span></div>
     <div><small>Maximum takeoff weight</small><strong>{% if aircraft.mtow_lb %}{{ "{:,.0f}".format(aircraft.mtow_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.mtow_lb %}lb{% else %}not available in FAA match{% endif %}</span></div>
     <div><small>Wingspan</small><strong>{% if aircraft.wingspan_ft %}{{ "%.1f"|format(aircraft.wingspan_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.wingspan_ft %}ft · {{ "%.1f"|format(aircraft.wingspan_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
     <div><small>Overall length</small><strong>{% if aircraft.length_ft %}{{ "%.1f"|format(aircraft.length_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.length_ft %}ft · {{ "%.1f"|format(aircraft.length_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
@@ -24,7 +24,7 @@
     <div><small>Maximum landing weight</small><strong>{% if aircraft.landing_weight_lb is number %}{{ "{:,.0f}".format(aircraft.landing_weight_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.landing_weight_lb is number %}lb{% else %}not available{% endif %}</span></div>
     <div><small>Approach reference</small><strong>{{ aircraft.approach_speed_knot or "—" }}</strong><span>{% if aircraft.approach_speed_knot %}knots · FAA database value{% else %}not available{% endif %}</span></div>
     <div><small>ICAO wake category</small><strong>{{ aircraft.wake_category or "—" }}</strong><span>planning reference</span></div>
-    <div><small>Game base price</small><strong>${{ aircraft.price }}</strong><span>simulator value</span></div>
+    <div><small>{% if aircraft.price == "—" %}Catalog role{% else %}Game base price{% endif %}</small><strong>{% if aircraft.price == "—" %}Training / GA{% else %}${{ aircraft.price }}{% endif %}</strong><span>{% if aircraft.price == "—" %}reference aircraft{% else %}simulator value{% endif %}</span></div>
   </div>
   <div class="aircraft-data-sources">
     <div><strong>FAA Aircraft Characteristics Database</strong><p>Dimensions, weights, engine class, approach speed, and wake category matched through the ICAO designator.</p><a href="https://www.faa.gov/airports/engineering/aircraft_char_database" target="_blank" rel="noopener">View official dataset ↗</a></div>

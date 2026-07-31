@@ -109,6 +109,14 @@ De Haviland Canada Dash 8 Q400	DH8D	2,040	90	45,100k
 Comac	ARJ-21	Comac ARJ-21-700	AJ27	3,700	90	51,000k		
 C919	Comac C919-100STD	C919	4,139	192	81,200k		
 Comac C919-100ER	C919	5,576	192	83,200k	
+Cessna	152	Cessna 152	C152	768	2	—	Training aircraft
+Cessna	172 Skyhawk	Cessna 172 Skyhawk	C172	1,185	4	—	Training aircraft
+Piper	PA-28	Piper Warrior III	P28A	976	4	—	Training aircraft
+Piper Archer DX	P28A	968	4	—	Training aircraft
+Diamond	DA20	Diamond DA20-C1	DV20	972	2	—	Training aircraft
+Diamond	DA40	Diamond DA40 NG	DA40	1,341	4	—	Training aircraft
+Cirrus	SR20	Cirrus SR20	SR20	1,450	4	—	Training aircraft
+Beechcraft	Bonanza	Beechcraft Bonanza G36	BE36	1,704	6	—	General aviation
 How to Use This List
 
 Each aircraft will eventually link to its own page with:
