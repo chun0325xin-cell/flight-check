@@ -42,6 +42,7 @@ class FlightCheckTests(unittest.TestCase):
     def test_home_page_loads(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(response.data.count(b"pilotbrief-logo.png"), 2)
         self.assertIn(b"Plan with clarity", response.data)
         self.assertIn(b"by PilotBrief Lab", response.data)
         self.assertIn(b"A student-pilot preflight risk and planning workspace.", response.data)

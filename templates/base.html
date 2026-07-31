@@ -11,7 +11,7 @@
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico', v='20260730') }}" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32.png', v='20260730') }}">
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png', v='20260730') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260731-commercial-aircraft') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260731-footer-logo') }}">
   <script defer src="{{ url_for('static', filename='js/app.js', v='20260731-commercial-aircraft') }}"></script>
 </head>
 <body>
@@ -54,7 +54,10 @@
   {% endwith %}
   <main id="main">{% block content %}{% endblock %}</main>
   <footer>
-    <a class="brand footer-brand" href="{{ url_for('index') }}"><span class="brand-mark">FC</span><span>Flight<strong>Check</strong><small>by PilotBrief Lab</small></span></a>
+    <a class="brand footer-brand" href="{{ url_for('index') }}" aria-label="FlightCheck home">
+      <img class="footer-logo" src="{{ url_for('static', filename='images/pilotbrief-logo.png') }}" alt="" width="38" height="38">
+      <span>Flight<strong>Check</strong><small>by PilotBrief Lab</small></span>
+    </a>
     <p>Think clearly. Decide deliberately. Fly safely.</p>
     <p class="footer-note">Educational use only — not an official flight-planning source.</p>
   </footer>
