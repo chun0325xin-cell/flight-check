@@ -403,15 +403,16 @@ if (aiRouteForm) {
   });
 }
 
-const programFilters = ["program-region", "program-type", "program-status"].map((id) => document.querySelector(`#${id}`));
+const programFilters = ["program-region", "program-type", "program-funding", "program-status"].map((id) => document.querySelector(`#${id}`));
 const programCards = [...document.querySelectorAll(".program-card")];
 function filterPrograms() {
   if (!programCards.length) return;
-  const [region, type, status] = programFilters.map((filter) => filter?.value || "all");
+  const [region, type, funding, status] = programFilters.map((filter) => filter?.value || "all");
   let visible = 0;
   programCards.forEach((card) => {
     const show = (region === "all" || card.dataset.region === region)
       && (type === "all" || card.dataset.type === type)
+      && (funding === "all" || card.dataset.funding === funding)
       && (status === "all" || card.dataset.status === status);
     card.hidden = !show;
     if (show) visible += 1;

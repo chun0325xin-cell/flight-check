@@ -77,8 +77,15 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Singapore Airlines", response.data)
         self.assertIn(b"United Airlines", response.data)
         self.assertIn(b"British Airways", response.data)
+        self.assertIn(b"Air France", response.data)
+        self.assertIn(b"Emirates", response.data)
+        self.assertIn(b"Qatar Airways", response.data)
+        self.assertIn(b"Ryanair", response.data)
+        self.assertIn(b"Wizz Air", response.data)
+        self.assertIn(b"TUI Airways", response.data)
         self.assertIn(b"Independent directory", response.data)
         self.assertIn(b'id="program-region"', response.data)
+        self.assertIn(b'id="program-funding"', response.data)
 
     def test_aircraft_library_has_filters_and_profiles(self):
         response = self.client.get("/aircraft")
