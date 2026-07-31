@@ -7,18 +7,27 @@
   <p>Compare recent risk pictures and notice patterns in the factors that influence your decisions.</p>
 </section>
 <section class="history-section">
+  {% if assessments %}
+  <div class="history-trends"><div><small>PAVE CATEGORY TRENDS</small><h2>Where concerns accumulate.</h2></div>{% for category, value in trends.items() %}<div><span>{{ category }}</span><strong>{{ value }}</strong><i style="--trend: {{ [value,100]|min }}"></i></div>{% endfor %}</div>
+  {% endif %}
   <div class="history-heading"><div><small>RISK REVIEWS</small><h2>Saved PAVE assessments</h2></div><a href="{{ url_for('briefing') }}#assessment">New assessment →</a></div>
   {% if assessments %}
+  <form class="compare-form" id="compare-form" action="{{ url_for('compare_assessments') }}" method="get"></form>
+  <p>Select exactly two assessments, then compare their category scores.</p>
   <div class="history-list">
     {% for item in assessments %}
     <article class="history-card risk-{{ item.risk_level|lower }}">
       <div class="history-score"><strong>{{ item.score }}</strong><small>/100</small></div>
+      <label class="compare-check"><input form="compare-form" type="checkbox" name="assessment" value="{{ item.id }}"><span>Compare</span></label>
       <div class="history-main"><small>{{ item.created_at[:10] }} · ASSESSMENT #{{ item.id }}</small><h2>{{ item.flight_name }}</h2><p>{{ item.summary }}</p></div>
       <span class="risk-pill">{{ item.risk_level }}</span>
+      <a class="view-plan-button" href="{{ url_for('view_assessment', assessment_id=item.id) }}">View →</a>
+      <form class="history-rename" action="{{ url_for('rename_assessment', assessment_id=item.id) }}" method="post"><input name="flight_name" maxlength="80" value="{{ item.flight_name }}" aria-label="Rename assessment"><button>Rename</button></form>
       <form action="{{ url_for('delete_assessment', assessment_id=item.id) }}" method="post" data-confirm-delete><button aria-label="Delete {{ item.flight_name }}">Delete</button></form>
     </article>
     {% endfor %}
   </div>
+  <button class="button primary compare-button" form="compare-form" type="submit">Compare selected assessments →</button>
   {% else %}
   <div class="empty-state"><span>FC / 00</span><h2>No risk reviews yet.</h2><p>Your completed PAVE assessments will appear here.</p><a class="button primary" href="{{ url_for('briefing') }}#assessment">Run your first check →</a></div>
   {% endif %}
@@ -40,21 +49,22 @@
   <div class="empty-state route-empty"><span>FC / ROUTE</span><h2>No route plans yet.</h2><p>Your wind, time, and fuel planning exercises will appear here.</p><a class="button primary" href="{{ url_for('route_planner') }}">Plan a route →</a></div>
   {% endif %}
 
-  <div class="history-heading route-history-heading"><div><small>AI ROUTE DESIGNER</small><h2>Saved AI candidates</h2></div><a href="{{ url_for('ai_route_planner') }}">Generate candidate →</a></div>
+  <div class="history-heading route-history-heading"><div><small>TRAINING ROUTE PLANNER</small><h2>Saved route candidates</h2></div><a href="{{ url_for('ai_route_planner') }}">Generate candidate →</a></div>
   {% if ai_route_plans %}
   <div class="history-list">
     {% for plan in ai_route_plans %}
     <article class="history-card route-history-card">
       <div class="history-score"><strong>{{ plan.ete_minutes }}</strong><small>min</small></div>
-      <div class="history-main"><small>{{ plan.created_at[:10] }} · AI ROUTE #{{ plan.id }}</small><h2>{{ plan.departure }} → {{ plan.destination }}</h2><p>{{ plan.aircraft_type }} · {{ plan.distance }} nm · {{ plan.estimated_fuel }} gal estimated · {{ plan.optimization|replace("_", " ") }}</p></div>
-      <span class="risk-pill">AI candidate</span>
+      <div class="history-main"><small>{{ plan.created_at[:10] }} · ROUTE CANDIDATE #{{ plan.id }}</small><h2>{{ plan.departure }} → {{ plan.destination }}</h2><p>{{ plan.aircraft_type }} · {{ plan.distance }} nm · {{ plan.estimated_fuel }} gal estimated · {{ plan.optimization|replace("_", " ") }}</p></div>
+      <span class="risk-pill">Training candidate</span>
       <a class="view-plan-button" href="{{ url_for('saved_ai_route_plan', plan_id=plan.id) }}">View plan →</a>
-      <form action="{{ url_for('delete_ai_route_plan', plan_id=plan.id) }}" method="post" data-confirm-delete><button aria-label="Delete AI route {{ plan.departure }} to {{ plan.destination }}">Delete</button></form>
+      <form action="{{ url_for('delete_ai_route_plan', plan_id=plan.id) }}" method="post" data-confirm-delete><button aria-label="Delete route candidate {{ plan.departure }} to {{ plan.destination }}">Delete</button></form>
     </article>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty-state route-empty"><span>FC / AI</span><h2>No AI route candidates yet.</h2><p>Generated waypoint and altitude candidates will be saved here.</p><a class="button primary" href="{{ url_for('ai_route_planner') }}">Try AI route designer →</a></div>
+  <div class="empty-state route-empty"><span>FC / ROUTE</span><h2>No route candidates yet.</h2><p>Generated waypoint and altitude candidates will be saved here.</p><a class="button primary" href="{{ url_for('ai_route_planner') }}">Open Route Planner →</a></div>
   {% endif %}
+  <p class="privacy-note"><strong>Privacy:</strong> assessments, routes, and personal minimums are stored in SQLite and isolated with a private browser-session identifier. Clearing browser session data may prevent this browser from reconnecting to earlier records.</p>
 </section>
 {% endblock %}

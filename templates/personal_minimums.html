@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Personal Minimums — FlightCheck{% endblock %}
+{% block content %}
+<section class="page-hero minimums-hero">
+  <div class="eyebrow"><span></span> PERSONAL PLANNING LIMITS</div>
+  <h1>Define your margins.</h1>
+  <p>Save conservative limits for this browser. FlightCheck will compare future PAVE assessments with them.</p>
+</section>
+<section class="minimums-section">
+  <div class="minimums-notice"><strong>These are personal planning limits—not legal operating minimums.</strong><p>They do not replace regulations, an instructor’s direction, aircraft limitations, or current official information.</p></div>
+  <form class="minimums-form" method="post" action="{{ url_for('personal_minimums') }}">
+    <div class="field-grid three">
+      <label class="field">Minimum daytime VFR ceiling<input type="number" name="day_ceiling" min="0" max="20000" step="100" value="{{ minimums.day_ceiling if minimums else 3000 }}" required><small>feet AGL</small></label>
+      <label class="field">Minimum nighttime VFR ceiling<input type="number" name="night_ceiling" min="0" max="20000" step="100" value="{{ minimums.night_ceiling if minimums else 5000 }}" required><small>feet AGL</small></label>
+      <label class="field">Minimum visibility<input type="number" name="minimum_visibility" min="0" max="100" step="0.5" value="{{ minimums.visibility if minimums else 7 }}" required><small>statute miles</small></label>
+      <label class="field">Maximum surface wind<input type="number" name="surface_wind" min="0" max="100" value="{{ minimums.surface_wind if minimums else 20 }}" required><small>knots</small></label>
+      <label class="field">Maximum crosswind<input type="number" name="maximum_crosswind" min="0" max="100" value="{{ minimums.crosswind if minimums else 10 }}" required><small>knots</small></label>
+      <label class="field">Maximum gust spread<input type="number" name="gust_spread_limit" min="0" max="100" value="{{ minimums.gust_spread if minimums else 8 }}" required><small>knots</small></label>
+      <label class="field">Minimum planned fuel reserve<input type="number" name="fuel_reserve" min="0" max="600" value="{{ minimums.fuel_reserve if minimums else 60 }}" required><small>minutes</small></label>
+      <label class="field">Minimum sleep in previous 24 hours<input type="number" name="minimum_sleep" min="0" max="24" step="0.5" value="{{ minimums.sleep_hours if minimums else 7 }}" required><small>hours</small></label>
+    </div>
+    <div class="choice-field compact"><span>Is night flight permitted by your personal limits?</span><div class="choice-grid two">
+      <label><input type="radio" name="night_permitted" value="no" {% if not minimums or not minimums.night_permitted %}checked{% endif %}><span><b>No</b></span></label>
+      <label><input type="radio" name="night_permitted" value="yes" {% if minimums and minimums.night_permitted %}checked{% endif %}><span><b>Yes</b></span></label>
+    </div></div>
+    <label class="field">Notes or instructor-approved limitations<textarea name="minimums_notes" maxlength="1500" rows="5" placeholder="Aircraft, runway, terrain, recency, endorsement, or instructor limitations…">{{ minimums.notes if minimums else "" }}</textarea></label>
+    <div class="minimums-actions"><button class="button primary" type="submit">Save personal minimums →</button></div>
+  </form>
+  {% if minimums %}<form method="post" action="{{ url_for('reset_personal_minimums') }}" data-confirm-reset><button class="button ghost" type="submit">Reset saved limits</button></form>{% endif %}
+  <p class="privacy-note"><strong>Privacy:</strong> these settings are stored in SQLite and linked to a private identifier in this browser session. Other browser sessions cannot view them.</p>
+</section>
+{% endblock %}

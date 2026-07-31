@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% set shown_plans = plans if plans is defined else [plan] %}
-{% block title %}AI Routes {{ plan.departure }} to {{ plan.destination }} — FlightCheck{% endblock %}
+{% block title %}Route Planner {{ plan.departure }} to {{ plan.destination }} — FlightCheck{% endblock %}
 {% block content %}
 <section class="route-result-hero ai-result-hero">
   <div>
-    <div class="eyebrow"><span></span> {{ "AI route comparison" if shown_plans|length > 1 else "AI route candidate" }}</div>
+    <div class="eyebrow"><span></span> {{ "Route comparison" if shown_plans|length > 1 else "Training route candidate" }}</div>
     <p>{{ plan.aircraft_type|upper }} · AUTOMATIC WAYPOINT & WEATHER REVIEW</p>
     <h1>{{ plan.departure }} <i>→</i> {{ plan.destination }}</h1>
     {% if shown_plans|length > 1 %}
@@ -20,7 +20,7 @@
   {% for route in shown_plans %}
   <article class="comparison-card">
     <header class="comparison-head">
-      <small>OPTION {{ loop.index }} · AI CANDIDATE #{{ route.id }}</small>
+      <small>OPTION {{ loop.index }} · ROUTE CANDIDATE #{{ route.id }}</small>
       <h2>{{ "Lowest fuel" if route.optimization == "lowest_fuel" else "Fastest route" }}</h2>
       <div class="route-line">{% for point in route.route_points %}<b>{{ point.id }}</b>{% if not loop.last %}<span></span>{% endif %}{% endfor %}</div>
     </header>

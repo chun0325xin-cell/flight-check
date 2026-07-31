@@ -2,7 +2,7 @@
 {% block title %}Aircraft Library — FlightCheck{% endblock %}
 {% block content %}
 <section class="aircraft-hero">
-  <div><div class="eyebrow"><span></span> AIRLINER + TRAINING AIRCRAFT INDEX</div><h1>Explore the fleet.</h1><p>Browse airline, training, and general-aviation aircraft by manufacturer, range, and operating category.</p></div>
+  <div><div class="eyebrow"><span></span> {{ "AIRLINE SIMULATOR DATA" if simulator_only else "AIRLINER + TRAINING AIRCRAFT INDEX" }}</div><h1>{{ "Explore simulator aircraft." if simulator_only else "Explore the fleet." }}</h1><p>{% if simulator_only %}Airliner catalog values reproduced from The Airline Simulator source and clearly separated from real training-aircraft references.{% else %}Browse airline, training, and general-aviation aircraft by manufacturer, range, and operating category.{% endif %}</p></div>
   <div class="aircraft-hero-code"><span>FC / TYPE INDEX</span><strong>{{ aircraft|length }}</strong><small>AIRCRAFT PROFILES</small></div>
 </section>
 <section class="aircraft-catalog">

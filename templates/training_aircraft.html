@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Training Aircraft — FlightCheck{% endblock %}
+{% block content %}
+<section class="aircraft-hero">
+  <div><div class="eyebrow"><span></span> TRAINING AIRCRAFT</div><h1>Learn the familiar fleet.</h1><p>General reference profiles for aircraft commonly encountered in primary and advanced flight training.</p></div>
+  <div class="aircraft-hero-code"><span>FC / TRAINING</span><strong>{{ aircraft|length }}</strong><small>REFERENCE PROFILES</small></div>
+</section>
+<section class="aircraft-catalog">
+  <div class="catalog-status"><span><b>{{ aircraft|length }}</b> aircraft shown</span><small>Always use the POH/AFM for the exact aircraft, serial number, equipment, loading, and conditions.</small></div>
+  <div class="aircraft-grid">
+    {% for item in aircraft %}
+    <article class="aircraft-card">
+      <a class="aircraft-card-link" href="{{ url_for('aircraft_detail', slug=item.slug) }}">
+        <div class="aircraft-photo"><img src="{{ item.image }}" alt="{{ item.maker }} {{ item.name }} aircraft photograph" loading="lazy"><span>{{ "%02d"|format(loop.index) }}</span><i>Representative model photo</i></div>
+        <div class="aircraft-card-body"><small>{{ item.maker|upper }} / {{ item.family|upper }}</small><h2>{{ item.name }}</h2><p>ICAO {{ item.icao }} · {{ item.seats }} occupants · piston training/GA reference</p><dl><div><dt>Reference range</dt><dd>{{ item.range_nm }} nm</dd></div><div><dt>MTOW</dt><dd>{{ "{:,.0f}".format(item.mtow_lb) if item.mtow_lb else "—" }} lb</dd></div><div><dt>Wingspan</dt><dd>{{ "%.1f"|format(item.wingspan_ft) if item.wingspan_ft else "—" }} ft</dd></div><div><dt>First flight</dt><dd>{{ item.first_flight }}</dd></div></dl></div>
+      </a>
+      <a class="aircraft-photo-source" href="{{ item.image_source }}" target="_blank" rel="noopener">Photo source · Wikimedia Commons ↗</a>
+    </article>
+    {% endfor %}
+  </div>
+  <p class="aircraft-source-note"><strong>Reference only.</strong> Values are general identification data, not operational limitations. Use the approved POH/AFM and current aircraft records for every real flight.</p>
+</section>
+{% endblock %}

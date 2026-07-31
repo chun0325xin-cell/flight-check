@@ -1,6 +1,6 @@
 # FlightCheck
 
-FlightCheck is an educational preflight risk-reflection web app for student pilots. It guides a user through the **PAVE** framework—Pilot, Aircraft, enVironment, and External pressures—then identifies risk factors, suggests discussion points, and saves the assessment for later review.
+FlightCheck by PilotBrief Lab is a student-pilot preflight risk and planning workspace. It guides a user through the **PAVE** framework—Pilot, Aircraft, enVironment, and External pressures—then explains concerns, compares conditions with saved personal minimums, and stores the review privately for that browser session.
 
 > **Safety note:** FlightCheck is a classroom project, not an official flight-planning tool. It does not replace an instructor, a weather briefing, FAA regulations, aircraft documents, or pilot-in-command judgment.
 
@@ -12,11 +12,12 @@ FlightCheck is an educational preflight risk-reflection web app for student pilo
 - Waypoint-by-waypoint navigation log for planned altitude, radio facility, frequency, and notes
 - Weather-factor workspace with optional live METAR observations
 - Built-in planning assistant with optional OpenAI Responses API enhancement
-- AI Route Designer with searchable global airports and automatic lowest-fuel and fastest route comparison
+- Training Route Planner with searchable global airports and automatic lowest-fuel and fastest route comparison
 - Server-side validation of AI-suggested waypoint identifiers before map display, with proposed altitude at each validated point
 - Explainable risk indicator with factor-by-factor feedback
-- Persistent assessment history
-- Delete controls for saved assessments
+- Session-isolated SQLite storage for assessments, routes, and personal minimums
+- View, rename, compare, trend, and delete controls for saved assessments
+- Separate training-aircraft reference and airline-simulator data sections
 - Responsive, accessible interface for desktop and mobile
 - Clear safety boundaries throughout the experience
 
@@ -52,7 +53,7 @@ The SQLite database is created automatically at `instance/flightcheck.db`.
 
 FlightCheck completes two point requirements:
 
-1. **Persistent data store:** SQLite stores assessments in the `assessments` table. Database setup and queries are in `app.py`, especially `init_db()`, `assess()`, and `history()`.
+1. **Persistent data store:** SQLite stores assessments, route exercises, and personal minimums. Database setup and safe additive migrations are in `init_db()`.
 2. **Meaningful POST usage:** `POST /assess` validates the submitted briefing, runs the PAVE-based evaluation logic, saves the result, and renders tailored feedback. `POST /history/<id>/delete` also changes persistent state.
 
 `POST /plan` provides another substantive workflow: it validates a proposed route, solves an educational wind triangle, estimates time and fuel, retrieves recent METAR observations when available, generates a planning-assistant brief, and saves the route plan.
@@ -87,7 +88,8 @@ tests/                 Automated Flask tests
 - Route calculations use user-entered true course and wind; they do not account for magnetic variation, climb/descent, changing winds, terrain, airspace, or aircraft-specific performance.
 - “Lowest fuel” and “fastest” use aircraft-category estimates plus available forecast wind components; they are not guarantees of a globally optimal, legal, or safe route.
 - AI waypoint and altitude suggestions can be wrong or incomplete. Identifiers are checked before mapping, but pilots must independently verify charts, terrain, airspace, weather, NOTAMs, performance, weight-and-balance/CG, fuel requirements, and ATC instructions.
-- Assessments are local to the machine running the app and do not have user accounts.
+- Records are associated with a signed private browser-session UUID rather than an account. Clearing session cookies breaks that association.
+- SQLite is durable for local use. A serverless Vercel `/tmp` database is ephemeral; durable public multi-instance storage requires an external managed database.
 - The app cannot determine whether a flight is legal or safe.
 
 ## Data sources and tools
@@ -102,7 +104,7 @@ tests/                 Automated Flask tests
 
 ## Possible future improvements
 
-- CFI-reviewed configurable personal minimums
+- Optional authenticated accounts and encrypted cross-device synchronization
 - Official aviation-data integrations with clear source attribution
 - Accounts and private cloud synchronization
-- Trend charts across recurring risk factors
+- CFI review of the educational scoring weights and mitigation prompts

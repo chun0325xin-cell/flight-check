@@ -43,6 +43,12 @@ class FlightCheckTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Plan with clarity", response.data)
+        self.assertIn(b"by PilotBrief Lab", response.data)
+        self.assertIn(b"A student-pilot preflight risk and planning workspace.", response.data)
+        self.assertIn(b"/personal-minimums", response.data)
+        self.assertIn(b"/training-aircraft", response.data)
+        self.assertIn(b"/airline-simulator-data", response.data)
+        self.assertNotIn(b"FLIGHTCHECK AVIATION NETWORK", response.data)
         self.assertIn(b'class="planner-cta"', response.data)
         self.assertIn(b"Route planner", response.data)
         self.assertIn(b"Start briefing", response.data)
@@ -128,6 +134,15 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"June 12, 1955", cessna.data)
         self.assertIn(b"2,550", cessna.data)
         self.assertIn(b"Training / GA", cessna.data)
+
+        training = self.client.get("/training-aircraft")
+        self.assertEqual(training.status_code, 200)
+        self.assertIn(b"Cessna 152", training.data)
+        self.assertNotIn(b"A350-900", training.data)
+        simulator = self.client.get("/airline-simulator-data")
+        self.assertEqual(simulator.status_code, 200)
+        self.assertIn(b"AIRLINE SIMULATOR DATA", simulator.data)
+        self.assertNotIn(b"Cessna 152", simulator.data)
 
     def test_airbus_families_do_not_share_the_wrong_photo(self):
         aircraft = {item["name"]: item for item in flightcheck.load_aircraft_catalog()}
@@ -363,7 +378,7 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"Field elevation 13 ft MSL", response.data)
         self.assertIn(b"Airport elevation source", response.data)
         history = self.client.get("/history")
-        self.assertIn(b"Saved AI candidates", history.data)
+        self.assertIn(b"Saved route candidates", history.data)
         self.assertIn(b"787-9 Dreamliner", history.data)
         saved = self.client.get("/ai-plan/1")
         self.assertEqual(saved.status_code, 200)
@@ -415,6 +430,62 @@ class FlightCheckTests(unittest.TestCase):
                 "SELECT optimization FROM ai_route_plans"
             ).fetchall()
         self.assertEqual([row["optimization"] for row in saved], ["fastest"])
+
+    def test_personal_minimums_persist_and_are_compared(self):
+        response = self.client.post("/personal-minimums", data={
+            "day_ceiling": "3000", "night_ceiling": "5000",
+            "minimum_visibility": "7", "surface_wind": "15",
+            "maximum_crosswind": "8", "gust_spread_limit": "6",
+            "fuel_reserve": "60", "minimum_sleep": "7",
+            "night_permitted": "no", "minimums_notes": "Instructor reviewed.",
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Instructor reviewed.", response.data)
+        payload = self.assessment_payload(
+            ceiling="2000", visibility="5", wind="20", crosswind="10",
+            fuel_margin="45", sleep="6", night="yes",
+        )
+        result = self.client.post("/assess", data=payload)
+        self.assertIn(b"Saved-limit comparison", result.data)
+        self.assertIn(b"Visibility is below your personal minimum", result.data)
+        self.assertIn(b"do not permit night flight", result.data)
+        with flightcheck.app.app_context():
+            count = flightcheck.get_db().execute("SELECT COUNT(*) FROM personal_minimums").fetchone()[0]
+        self.assertEqual(count, 1)
+
+    def test_records_are_isolated_by_browser_session(self):
+        self.client.post("/assess", data=self.assessment_payload(flight_name="Private owner record"))
+        other_client = flightcheck.app.test_client()
+        response = other_client.get("/history")
+        self.assertNotIn(b"Private owner record", response.data)
+        owner_history = self.client.get("/history")
+        self.assertIn(b"Private owner record", owner_history.data)
+
+    def test_assessments_can_be_renamed_viewed_and_compared(self):
+        self.client.post("/assess", data=self.assessment_payload(flight_name="First"))
+        self.client.post("/assess", data=self.assessment_payload(
+            flight_name="Second", stress="high", weather="mixed"
+        ))
+        renamed = self.client.post(
+            "/history/1/rename", data={"flight_name": "Renamed first"}, follow_redirects=True
+        )
+        self.assertIn(b"Renamed first", renamed.data)
+        viewed = self.client.get("/history/1")
+        self.assertEqual(viewed.status_code, 200)
+        compared = self.client.get("/history/compare?assessment=1&assessment=2")
+        self.assertEqual(compared.status_code, 200)
+        self.assertIn(b"Two briefings, side by side", compared.data)
+        self.assertIn(b"Renamed first", compared.data)
+
+    def test_safe_migration_columns_exist(self):
+        with flightcheck.app.app_context():
+            flightcheck.init_db()
+            assessment_columns = {
+                row["name"] for row in flightcheck.get_db().execute(
+                    "PRAGMA table_info(assessments)"
+                ).fetchall()
+            }
+        self.assertTrue({"session_id", "details_json", "category_scores"} <= assessment_columns)
 
 
 if __name__ == "__main__":

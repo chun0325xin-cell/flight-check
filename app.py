@@ -8,11 +8,12 @@ import sqlite3
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
-from flask import Flask, abort, flash, g, redirect, render_template, request, url_for
+from flask import Flask, abort, flash, g, redirect, render_template, request, session, url_for
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -84,6 +85,15 @@ app.config.update(
     TEMPLATES_AUTO_RELOAD=True,
     SEND_FILE_MAX_AGE_DEFAULT=0,
 )
+
+
+@app.template_filter("from_json")
+def from_json(value: str) -> dict:
+    try:
+        parsed = json.loads(value or "{}")
+        return parsed if isinstance(parsed, dict) else {}
+    except (json.JSONDecodeError, TypeError):
+        return {}
 
 
 def get_db() -> sqlite3.Connection:
@@ -189,7 +199,56 @@ def init_db() -> None:
     for column, statement in route_migrations.items():
         if column not in route_columns:
             get_db().execute(statement)
+    migrations = {
+        "assessments": {
+            "session_id": "ALTER TABLE assessments ADD COLUMN session_id TEXT NOT NULL DEFAULT ''",
+            "details_json": "ALTER TABLE assessments ADD COLUMN details_json TEXT NOT NULL DEFAULT '{}'",
+            "category_scores": "ALTER TABLE assessments ADD COLUMN category_scores TEXT NOT NULL DEFAULT '{}'",
+        },
+        "route_plans": {
+            "session_id": "ALTER TABLE route_plans ADD COLUMN session_id TEXT NOT NULL DEFAULT ''",
+        },
+        "ai_route_plans": {
+            "session_id": "ALTER TABLE ai_route_plans ADD COLUMN session_id TEXT NOT NULL DEFAULT ''",
+        },
+    }
+    for table, columns in migrations.items():
+        existing = {row["name"] for row in get_db().execute(f"PRAGMA table_info({table})").fetchall()}
+        for column, statement in columns.items():
+            if column not in existing:
+                get_db().execute(statement)
+    get_db().execute(
+        """
+        CREATE TABLE IF NOT EXISTS personal_minimums (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL UNIQUE,
+            updated_at TEXT NOT NULL,
+            day_ceiling INTEGER NOT NULL,
+            night_ceiling INTEGER NOT NULL,
+            visibility REAL NOT NULL,
+            surface_wind INTEGER NOT NULL,
+            crosswind INTEGER NOT NULL,
+            gust_spread INTEGER NOT NULL,
+            fuel_reserve INTEGER NOT NULL,
+            sleep_hours REAL NOT NULL,
+            night_permitted INTEGER NOT NULL,
+            notes TEXT NOT NULL
+        )
+        """
+    )
+    for table in ("assessments", "route_plans", "ai_route_plans"):
+        get_db().execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{table}_session_id ON {table}(session_id)"
+        )
     get_db().commit()
+
+
+def visitor_id() -> str:
+    value = session.get("visitor_id")
+    if not value:
+        value = str(uuid.uuid4())
+        session["visitor_id"] = value
+    return value
 
 
 @app.cli.command("init-db")
@@ -209,13 +268,30 @@ def number(name: str, minimum: float, maximum: float, *, integer: bool = False) 
     return value
 
 
-def calculate_assessment(data: dict) -> dict:
+def optional_number(
+    name: str, default: float | int, minimum: float, maximum: float, *, integer: bool = False
+) -> float | int:
+    if not request.form.get(name, "").strip():
+        return default
+    return number(name, minimum, maximum, integer=integer)
+
+
+def current_minimums() -> sqlite3.Row | None:
+    init_db()
+    return get_db().execute(
+        "SELECT * FROM personal_minimums WHERE session_id = ?", (visitor_id(),)
+    ).fetchone()
+
+
+def calculate_assessment(data: dict, minimums: dict | None = None) -> dict:
     score = 0
     findings: list[dict[str, str | int]] = []
+    category_scores = {"Pilot": 0, "Aircraft": 0, "Environment": 0, "External pressures": 0}
 
     def flag(category: str, title: str, detail: str, points: int) -> None:
         nonlocal score
         score += points
+        category_scores[category] = category_scores.get(category, 0) + points
         findings.append({"category": category, "title": title, "detail": detail, "points": points})
 
     if data["experience"] < 25:
@@ -230,11 +306,27 @@ def calculate_assessment(data: dict) -> dict:
         flag("Pilot", "High stress or distraction", "Resolve the distraction or choose another time to fly.", 18)
     elif data["stress"] == "moderate":
         flag("Pilot", "Moderate stress", "Slow down and use written checklists deliberately.", 7)
+    if data.get("recent_hours", 10) < 3:
+        flag("Pilot", "Limited recent practice", "Consider whether recent proficiency matches the planned conditions.", 10)
+    for field, title in (
+        ("illness", "Illness reported"), ("medication", "Medication requires review"),
+        ("alcohol", "Alcohol concern"), ("emotion_eating", "Emotion or nutrition concern"),
+    ):
+        if data.get(field) == "yes":
+            flag("Pilot", title, "Resolve this IMSAFE item and consult an appropriate professional or instructor before deciding.", 18)
+    if data.get("distraction") == "high":
+        flag("Pilot", "High distraction level", "Remove or manage the distraction before continuing the briefing.", 12)
 
     if data["aircraft_status"] == "unresolved":
         flag("Aircraft", "Unresolved aircraft issue", "Do not fly until a qualified person resolves the discrepancy.", 35)
     elif data["aircraft_status"] == "monitor":
         flag("Aircraft", "Condition requires attention", "Review maintenance status and aircraft limitations before departure.", 15)
+    if data.get("known_discrepancies", "").strip():
+        flag("Aircraft", "Known discrepancy entered", "Confirm disposition, airworthiness, and applicable limitations with qualified maintenance guidance.", 14)
+    if data.get("weight_balance") == "no":
+        flag("Aircraft", "Weight and balance not verified", "Complete the aircraft-specific weight-and-balance calculation.", 18)
+    if data.get("performance_verified") == "no":
+        flag("Aircraft", "Performance not verified", "Calculate takeoff, climb, landing, and runway margins from approved aircraft data.", 16)
     if data["fuel_margin"] < 45:
         flag("Aircraft", "Narrow fuel margin", "Increase fuel margin and verify legal reserves for this flight.", 18)
     elif data["fuel_margin"] < 60:
@@ -244,6 +336,8 @@ def calculate_assessment(data: dict) -> dict:
         flag("Environment", "Marginal or changing weather", "Obtain an official briefing and prepare a clear diversion or no-go trigger.", 22)
     elif data["weather"] == "mixed":
         flag("Environment", "Mixed conditions", "Compare conditions with personal minimums and monitor trends.", 10)
+    if data.get("ceiling", 10000) < 2000:
+        flag("Environment", "Low ceiling", "Compare the ceiling with terrain, route needs, regulations, and personal minimums.", 18)
     if data["visibility"] < 3:
         flag("Environment", "Very low visibility", "Conditions may be unsuitable or below legal VFR minimums. Verify regulations and briefing data.", 35)
     elif data["visibility"] < 6:
@@ -258,11 +352,29 @@ def calculate_assessment(data: dict) -> dict:
         flag("Environment", "Elevated surface wind", "Check gust spread and airport/runway conditions.", 8)
     if data["night"]:
         flag("Environment", "Night operation", "Account for reduced visual cues, lighting, weather, and alternates.", 8)
+    if data.get("gust_spread", 0) > 10:
+        flag("Environment", "Wide gust spread", "Expect changing control demands and verify runway and aircraft margins.", 12)
+    for field, title in (
+        ("terrain_concerns", "Terrain concern identified"),
+        ("convection", "Convection concern identified"),
+        ("icing", "Icing concern identified"),
+        ("turbulence", "Turbulence concern identified"),
+    ):
+        if data.get(field) == "yes":
+            flag("Environment", title, "Use current official information and define a clear avoidance or cancellation trigger.", 15)
 
     if data["pressure_level"] == "high":
         flag("External pressures", "Strong pressure to complete the flight", "Remove the deadline. Make delaying or canceling an easy, explicit option.", 20)
     elif data["pressure_level"] == "moderate":
         flag("External pressures", "Some schedule pressure", "Tell passengers the plan may change and set a firm no-go trigger.", 8)
+    pressure_fields = {
+        "passenger_pressure": "Passenger expectations",
+        "cost_pressure": "Cost pressure",
+        "destination_desire": "Strong desire to reach the destination",
+    }
+    for field, title in pressure_fields.items():
+        if data.get(field) == "high":
+            flag("External pressures", title, "State an alternative plan now so this pressure does not control the decision.", 10)
 
     score = min(score, 100)
     if score >= 55:
@@ -279,7 +391,49 @@ def calculate_assessment(data: dict) -> dict:
             "detail": "Continue with official weather, NOTAM, weight-and-balance, performance, and preflight checks.",
             "points": 0,
         })
-    return {"score": score, "level": level, "decision": decision, "summary": summary, "findings": findings}
+    minimum_exceedances: list[str] = []
+    if minimums:
+        ceiling_limit = minimums["night_ceiling"] if data.get("night") else minimums["day_ceiling"]
+        comparisons = (
+            (data.get("ceiling", 100000) < ceiling_limit, f"Ceiling is below your {'night' if data.get('night') else 'day'} VFR minimum."),
+            (data["visibility"] < minimums["visibility"], "Visibility is below your personal minimum."),
+            (data["wind"] > minimums["surface_wind"], "Surface wind exceeds your personal maximum."),
+            (data["crosswind"] > minimums["crosswind"], "Crosswind exceeds your personal maximum."),
+            (data.get("gust_spread", 0) > minimums["gust_spread"], "Gust spread exceeds your personal maximum."),
+            (data["fuel_margin"] < minimums["fuel_reserve"], "Planned fuel reserve is below your personal minimum."),
+            (data["sleep"] < minimums["sleep_hours"], "Sleep is below your personal minimum."),
+            (data.get("night") and not minimums["night_permitted"], "Your saved limits do not permit night flight."),
+        )
+        minimum_exceedances = [message for exceeded, message in comparisons if exceeded]
+    missing = []
+    for field, label in (
+        ("weight_balance", "aircraft-specific weight and balance"),
+        ("performance_verified", "takeoff and landing performance"),
+    ):
+        if data.get(field) != "yes":
+            missing.append(label)
+    if not data.get("aircraft_label"):
+        missing.append("exact aircraft model or tail number")
+    combinations = []
+    if category_scores["Pilot"] and category_scores["Environment"]:
+        combinations.append("Pilot readiness concerns are combining with environmental demands.")
+    if category_scores["Environment"] and category_scores["External pressures"]:
+        combinations.append("Weather or terrain concerns are combining with pressure to complete the flight.")
+    if category_scores["Aircraft"] and category_scores["Environment"]:
+        combinations.append("Aircraft verification gaps are reducing margin in challenging conditions.")
+    top_concerns = sorted(findings, key=lambda item: int(item["points"]), reverse=True)[:3]
+    questions = [
+        "What specific change would reduce the highest concern?",
+        "What current official source or aircraft document still needs review?",
+        "Would the decision change if there were no schedule, passenger, or cost pressure?",
+    ]
+    return {
+        "score": score, "level": level, "decision": decision, "summary": summary,
+        "findings": findings, "top_concerns": top_concerns,
+        "category_scores": category_scores, "minimum_exceedances": minimum_exceedances,
+        "missing_information": missing, "risk_combinations": combinations,
+        "mitigation_questions": questions,
+    }
 
 
 def calculate_wind_plan(course: float, tas: float, wind_from: float, wind_speed: float) -> dict:
@@ -1124,13 +1278,81 @@ def index():
 
 @app.get("/briefing")
 def briefing():
-    return render_template("briefing.html")
+    return render_template("briefing.html", minimums=current_minimums())
 
 
 @app.get("/aircraft")
 def aircraft():
-    aircraft_catalog = load_aircraft_catalog()
-    return render_template("aircraft.html", aircraft=aircraft_catalog)
+    return render_template("aircraft.html", aircraft=load_aircraft_catalog())
+
+
+@app.get("/training-aircraft")
+def training_aircraft():
+    items = [item for item in load_aircraft_catalog() if item["class_group"] == "general_aviation"]
+    return render_template("training_aircraft.html", aircraft=items)
+
+
+@app.get("/airline-simulator-data")
+def airline_simulator_data():
+    items = [item for item in load_aircraft_catalog() if item["class_group"] != "general_aviation"]
+    return render_template("aircraft.html", aircraft=items, simulator_only=True)
+
+
+@app.route("/personal-minimums", methods=["GET", "POST"])
+def personal_minimums():
+    init_db()
+    if request.method == "POST":
+        try:
+            values = {
+                "day_ceiling": number("day_ceiling", 0, 20000, integer=True),
+                "night_ceiling": number("night_ceiling", 0, 20000, integer=True),
+                "visibility": number("minimum_visibility", 0, 100),
+                "surface_wind": number("surface_wind", 0, 100, integer=True),
+                "crosswind": number("maximum_crosswind", 0, 100, integer=True),
+                "gust_spread": number("gust_spread_limit", 0, 100, integer=True),
+                "fuel_reserve": number("fuel_reserve", 0, 600, integer=True),
+                "sleep_hours": number("minimum_sleep", 0, 24),
+                "night_permitted": request.form.get("night_permitted") == "yes",
+                "notes": request.form.get("minimums_notes", "").strip()[:1500],
+            }
+        except ValueError as exc:
+            flash(str(exc), "error")
+            return redirect(url_for("personal_minimums"))
+        get_db().execute(
+            """
+            INSERT INTO personal_minimums (
+                session_id, updated_at, day_ceiling, night_ceiling, visibility,
+                surface_wind, crosswind, gust_spread, fuel_reserve, sleep_hours,
+                night_permitted, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(session_id) DO UPDATE SET
+                updated_at=excluded.updated_at, day_ceiling=excluded.day_ceiling,
+                night_ceiling=excluded.night_ceiling, visibility=excluded.visibility,
+                surface_wind=excluded.surface_wind, crosswind=excluded.crosswind,
+                gust_spread=excluded.gust_spread, fuel_reserve=excluded.fuel_reserve,
+                sleep_hours=excluded.sleep_hours, night_permitted=excluded.night_permitted,
+                notes=excluded.notes
+            """,
+            (
+                visitor_id(), datetime.now(timezone.utc).isoformat(), values["day_ceiling"],
+                values["night_ceiling"], values["visibility"], values["surface_wind"],
+                values["crosswind"], values["gust_spread"], values["fuel_reserve"],
+                values["sleep_hours"], int(values["night_permitted"]), values["notes"],
+            ),
+        )
+        get_db().commit()
+        flash("Personal minimums saved for this browser session.", "success")
+        return redirect(url_for("personal_minimums"))
+    return render_template("personal_minimums.html", minimums=current_minimums())
+
+
+@app.post("/personal-minimums/reset")
+def reset_personal_minimums():
+    init_db()
+    get_db().execute("DELETE FROM personal_minimums WHERE session_id = ?", (visitor_id(),))
+    get_db().commit()
+    flash("Personal minimums reset.", "success")
+    return redirect(url_for("personal_minimums"))
 
 
 @app.get("/api/airports")
@@ -1180,22 +1402,51 @@ def assess():
         flight_name = request.form.get("flight_name", "").strip()[:80] or "Untitled flight"
         data = {
             "experience": number("experience", 0, 5000, integer=True),
+            "recent_hours": optional_number("recent_hours", 10, 0, 500, integer=True),
             "sleep": number("sleep", 0, 24),
-            "stress": request.form.get("stress"),
+            "illness": request.form.get("illness", "no"),
+            "medication": request.form.get("medication", "no"),
+            "alcohol": request.form.get("alcohol", "no"),
+            "emotion_eating": request.form.get("emotion_eating", "no"),
+            "stress": request.form.get("stress", "low"),
+            "distraction": request.form.get("distraction", "low"),
+            "aircraft_label": request.form.get("aircraft_label", "").strip()[:80],
             "aircraft_status": request.form.get("aircraft_status"),
+            "known_discrepancies": request.form.get("known_discrepancies", "").strip()[:1000],
             "fuel_margin": number("fuel_margin", 0, 600, integer=True),
+            "weight_balance": request.form.get("weight_balance", "yes"),
+            "performance_verified": request.form.get("performance_verified", "yes"),
             "weather": request.form.get("weather"),
+            "ceiling": optional_number("ceiling", 10000, 0, 60000, integer=True),
             "visibility": number("visibility", 0, 100),
             "wind": number("wind", 0, 150, integer=True),
             "crosswind": number("crosswind", 0, 100, integer=True),
+            "gust_spread": optional_number("gust_spread", 0, 0, 100, integer=True),
             "night": request.form.get("night") == "yes",
+            "terrain_concerns": request.form.get("terrain_concerns", "no"),
+            "convection": request.form.get("convection", "no"),
+            "icing": request.form.get("icing", "no"),
+            "turbulence": request.form.get("turbulence", "no"),
             "pressure_level": request.form.get("pressure_level"),
+            "passenger_pressure": request.form.get("passenger_pressure", "low"),
+            "cost_pressure": request.form.get("cost_pressure", "low"),
+            "destination_desire": request.form.get("destination_desire", "low"),
+            "change_triggers": request.form.get("change_triggers", "").strip()[:1500],
         }
         allowed = {
             "stress": {"low", "moderate", "high"},
             "aircraft_status": {"clear", "monitor", "unresolved"},
             "weather": {"stable", "mixed", "marginal"},
             "pressure_level": {"low", "moderate", "high"},
+            "distraction": {"low", "moderate", "high"},
+            "illness": {"yes", "no"}, "medication": {"yes", "no"},
+            "alcohol": {"yes", "no"}, "emotion_eating": {"yes", "no"},
+            "weight_balance": {"yes", "no"}, "performance_verified": {"yes", "no"},
+            "terrain_concerns": {"yes", "no"}, "convection": {"yes", "no"},
+            "icing": {"yes", "no"}, "turbulence": {"yes", "no"},
+            "passenger_pressure": {"low", "moderate", "high"},
+            "cost_pressure": {"low", "moderate", "high"},
+            "destination_desire": {"low", "moderate", "high"},
         }
         if any(data[key] not in values for key, values in allowed.items()):
             raise ValueError("Choose an option for every assessment field.")
@@ -1203,21 +1454,24 @@ def assess():
         flash(str(exc), "error")
         return redirect(url_for("briefing") + "#assessment")
 
-    result = calculate_assessment(data)
+    minimums_row = current_minimums()
+    result = calculate_assessment(data, dict(minimums_row) if minimums_row else None)
     summary = " ".join(f"{item['category']}: {item['title']}." for item in result["findings"])
     cursor = get_db().execute(
         """
         INSERT INTO assessments (
             created_at, flight_name, experience, sleep, stress, aircraft_status,
             fuel_margin, weather, visibility, wind, crosswind, night,
-            pressure_level, score, risk_level, summary
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            pressure_level, score, risk_level, summary, session_id, details_json,
+            category_scores
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             datetime.now(timezone.utc).isoformat(), flight_name, data["experience"], data["sleep"],
             data["stress"], data["aircraft_status"], data["fuel_margin"], data["weather"],
             data["visibility"], data["wind"], data["crosswind"], int(data["night"]),
             data["pressure_level"], result["score"], result["level"], summary,
+            visitor_id(), json.dumps(data), json.dumps(result["category_scores"]),
         ),
     )
     get_db().commit()
@@ -1227,17 +1481,98 @@ def assess():
 @app.get("/history")
 def history():
     init_db()
-    assessments = get_db().execute("SELECT * FROM assessments ORDER BY id DESC LIMIT 50").fetchall()
-    route_plans = get_db().execute("SELECT * FROM route_plans ORDER BY id DESC LIMIT 50").fetchall()
-    ai_route_plans = get_db().execute("SELECT * FROM ai_route_plans ORDER BY id DESC LIMIT 50").fetchall()
+    owner = visitor_id()
+    assessments = get_db().execute(
+        "SELECT * FROM assessments WHERE session_id = ? ORDER BY id DESC LIMIT 50", (owner,)
+    ).fetchall()
+    route_plans = get_db().execute(
+        "SELECT * FROM route_plans WHERE session_id = ? ORDER BY id DESC LIMIT 50", (owner,)
+    ).fetchall()
+    ai_route_plans = get_db().execute(
+        "SELECT * FROM ai_route_plans WHERE session_id = ? ORDER BY id DESC LIMIT 50", (owner,)
+    ).fetchall()
+    trends = {"Pilot": 0, "Aircraft": 0, "Environment": 0, "External pressures": 0}
+    for item in assessments:
+        try:
+            scores = json.loads(item["category_scores"] or "{}")
+        except json.JSONDecodeError:
+            scores = {}
+        for category in trends:
+            trends[category] += int(scores.get(category, 0))
     return render_template(
-        "history.html", assessments=assessments, route_plans=route_plans, ai_route_plans=ai_route_plans
+        "history.html", assessments=assessments, route_plans=route_plans,
+        ai_route_plans=ai_route_plans, trends=trends
     )
+
+
+@app.get("/history/<int:assessment_id>")
+def view_assessment(assessment_id: int):
+    init_db()
+    row = get_db().execute(
+        "SELECT * FROM assessments WHERE id = ? AND session_id = ?",
+        (assessment_id, visitor_id()),
+    ).fetchone()
+    if row is None:
+        abort(404)
+    try:
+        data = json.loads(row["details_json"] or "{}")
+    except json.JSONDecodeError:
+        data = {}
+    minimums_row = current_minimums()
+    result = calculate_assessment(data, dict(minimums_row) if minimums_row else None) if data else {
+        "score": row["score"], "level": row["risk_level"], "decision": "Saved assessment",
+        "summary": row["summary"], "findings": [], "top_concerns": [],
+        "category_scores": {}, "minimum_exceedances": [], "missing_information": [],
+        "risk_combinations": [], "mitigation_questions": [],
+    }
+    return render_template(
+        "result.html", result=result, data=data, assessment_id=row["id"],
+        flight_name=row["flight_name"], saved=True,
+    )
+
+
+@app.post("/history/<int:assessment_id>/rename")
+def rename_assessment(assessment_id: int):
+    name = request.form.get("flight_name", "").strip()[:80]
+    if not name:
+        flash("Enter a name for the assessment.", "error")
+        return redirect(url_for("history"))
+    cursor = get_db().execute(
+        "UPDATE assessments SET flight_name = ? WHERE id = ? AND session_id = ?",
+        (name, assessment_id, visitor_id()),
+    )
+    get_db().commit()
+    if cursor.rowcount == 0:
+        abort(404)
+    flash("Assessment renamed.", "success")
+    return redirect(url_for("history"))
+
+
+@app.get("/history/compare")
+def compare_assessments():
+    try:
+        ids = [int(value) for value in request.args.getlist("assessment")][:2]
+    except ValueError:
+        ids = []
+    if len(ids) != 2 or ids[0] == ids[1]:
+        flash("Choose two different assessments to compare.", "error")
+        return redirect(url_for("history"))
+    placeholders = ",".join("?" for _ in ids)
+    rows = get_db().execute(
+        f"SELECT * FROM assessments WHERE session_id = ? AND id IN ({placeholders})",
+        (visitor_id(), *ids),
+    ).fetchall()
+    if len(rows) != 2:
+        abort(404)
+    return render_template("assessment_compare.html", assessments=rows)
 
 
 @app.post("/history/<int:assessment_id>/delete")
 def delete_assessment(assessment_id: int):
-    cursor = get_db().execute("DELETE FROM assessments WHERE id = ?", (assessment_id,))
+    cursor = get_db().execute(
+        "DELETE FROM assessments WHERE id = ? AND session_id = ?",
+        (assessment_id, visitor_id()),
+    )
     get_db().commit()
     if cursor.rowcount == 0:
         abort(404)
@@ -1247,7 +1582,9 @@ def delete_assessment(assessment_id: int):
 
 @app.post("/history/routes/<int:plan_id>/delete")
 def delete_route_plan(plan_id: int):
-    cursor = get_db().execute("DELETE FROM route_plans WHERE id = ?", (plan_id,))
+    cursor = get_db().execute(
+        "DELETE FROM route_plans WHERE id = ? AND session_id = ?", (plan_id, visitor_id())
+    )
     get_db().commit()
     if cursor.rowcount == 0:
         abort(404)
@@ -1257,11 +1594,13 @@ def delete_route_plan(plan_id: int):
 
 @app.post("/history/ai-routes/<int:plan_id>/delete")
 def delete_ai_route_plan(plan_id: int):
-    cursor = get_db().execute("DELETE FROM ai_route_plans WHERE id = ?", (plan_id,))
+    cursor = get_db().execute(
+        "DELETE FROM ai_route_plans WHERE id = ? AND session_id = ?", (plan_id, visitor_id())
+    )
     get_db().commit()
     if cursor.rowcount == 0:
         abort(404)
-    flash("AI route candidate removed from history.", "success")
+    flash("Route candidate removed from history.", "success")
     return redirect(url_for("history"))
 
 
@@ -1333,8 +1672,8 @@ def route_planner():
             created_at, departure, destination, checkpoints, true_course, distance,
             true_airspeed, wind_direction, wind_speed, visibility, ceiling, temperature,
             weather_notes, heading, groundspeed, ete_minutes, fuel_needed, assistant_brief,
-            navlog, fuel_burn, reserve_minutes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            navlog, fuel_burn, reserve_minutes, session_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             datetime.now(timezone.utc).isoformat(), departure, destination, plan["checkpoints"],
@@ -1342,7 +1681,7 @@ def route_planner():
             plan["wind_speed"], plan["visibility"], plan["ceiling"], plan["temperature"],
             plan["weather_notes"], plan["heading"], plan["groundspeed"], plan["ete_minutes"],
             plan["fuel_needed"], assistant_brief, json.dumps(navlog), plan["fuel_burn"],
-            plan["reserve_minutes"],
+            plan["reserve_minutes"], visitor_id(),
         ),
     )
     get_db().commit()
@@ -1503,14 +1842,14 @@ def ai_route_planner():
                 created_at, departure, destination, aircraft_type, empty_weight, payload_weight,
                 fuel_gallons, max_gross_weight, cruise_speed, fuel_burn, reserve_minutes,
                 optimization, loaded_weight, distance, ete_minutes, estimated_fuel,
-                route_json, summary, warnings, agent_source
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                route_json, summary, warnings, agent_source, session_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (datetime.now(timezone.utc).isoformat(), departure, destination, data["aircraft_type"],
              data["empty_weight"], data["payload_weight"], data["fuel_gallons"],
              data["max_gross_weight"], data["cruise_speed"], data["fuel_burn"],
              data["reserve_minutes"], optimization, data["loaded_weight"], distance,
              ete_minutes, estimated_fuel, json.dumps(route_points), summary,
-             json.dumps(warnings), agent_source))
+             json.dumps(warnings), agent_source, visitor_id()))
         plans.append({**route_input, "id": cursor.lastrowid, "distance": distance,
                       "ete_minutes": ete_minutes, "estimated_fuel": estimated_fuel,
                       "route_points": route_points, "summary": summary, "rationale": rationale,
@@ -1524,7 +1863,10 @@ def ai_route_planner():
 @app.get("/ai-plan/<int:plan_id>")
 def saved_ai_route_plan(plan_id: int):
     init_db()
-    row = get_db().execute("SELECT * FROM ai_route_plans WHERE id = ?", (plan_id,)).fetchone()
+    row = get_db().execute(
+        "SELECT * FROM ai_route_plans WHERE id = ? AND session_id = ?",
+        (plan_id, visitor_id()),
+    ).fetchone()
     if row is None:
         abort(404)
     return render_template("ai_plan_result.html", plan=present_ai_route(row))
@@ -1533,7 +1875,10 @@ def saved_ai_route_plan(plan_id: int):
 @app.get("/plan/<int:plan_id>")
 def saved_route_plan(plan_id: int):
     init_db()
-    row = get_db().execute("SELECT * FROM route_plans WHERE id = ?", (plan_id,)).fetchone()
+    row = get_db().execute(
+        "SELECT * FROM route_plans WHERE id = ? AND session_id = ?",
+        (plan_id, visitor_id()),
+    ).fetchone()
     if row is None:
         abort(404)
     try:

@@ -2,9 +2,10 @@ const form = document.querySelector("#assessment-form");
 
 const translations = {
   en: {
-    nav_assess: "Assess", nav_route: "Route planner", nav_ai: "AI designer", nav_aircraft: "Aircraft", nav_history: "History",
-    nav_about: "About", nav_tips: "Flight tips", nav_programs: "Programs", nav_ai_route: "AI route", network_label: "FLIGHTCHECK AVIATION NETWORK",
-    network_status: "PLANNING SYSTEM ONLINE", ai_eyebrow: "AI-assisted route exploration",
+    nav_assess: "Assess", nav_route: "Route Planner", nav_ai: "Route Planner", nav_aircraft: "Aircraft", nav_history: "History",
+    nav_about: "About", nav_tips: "Flight Tips", nav_programs: "Pilot Programs", nav_ai_route: "Route Planner",
+    nav_minimums: "Personal Minimums", nav_resources: "Resources", nav_training_aircraft: "Training Aircraft", nav_simulator: "Airline Simulator Data",
+    ai_eyebrow: "Training route exploration",
     ai_title: "Tell it the mission.<br>Compare the tradeoff.",
     ai_intro: "Enter the airports, aircraft, and loading. FlightCheck asks the AI for a candidate optimized for lowest estimated fuel or fastest time, then validates each waypoint before placing it on the map.",
     mission: "MISSION", where_fly: "Where will you fly?", departure: "Departure airport", arrival: "Arrival airport",
@@ -14,9 +15,9 @@ const translations = {
     lowest_fuel_help: "Prefer the candidate with the lowest calculated cruise fuel.", fastest: "Fastest estimated time",
     fastest_help: "Prefer the shortest practical candidate route.", generate_route: "Generate candidate route"
     ,landing_kicker: "STUDENT PILOT DECISION SUPPORT", landing_title: "Plan with clarity.<br><em>Fly with purpose.</em>",
-    landing_intro: "FlightCheck brings preflight risk reflection, route planning, weather factors, fuel estimates, and AI-assisted waypoint exploration into one focused student-pilot workspace.",
+    landing_intro: "A student-pilot preflight risk and planning workspace.",
     start_briefing: "Start briefing", route_plan: "Route plan", proof_risk: "PAVE risk review",
-    proof_route: "AI route candidates", proof_history: "Saved planning history",
+    proof_route: "Training route candidates", proof_history: "Saved planning history",
     mission_heading: "One place to slow down before you speed up.",
     mission_copy: "Use structured questions to recognize risk, compare route tradeoffs, and prepare what must be verified with official aviation sources and your instructor.",
     feature_route: "Route intelligence", feature_route_copy: "Waypoints, altitude targets, estimated time, and fuel.",
@@ -31,9 +32,10 @@ const translations = {
     programs_intro: "Compare airline cadet programs, academies, and pilot pathways. FlightCheck provides a short summary and sends every applicant to the official source."
   },
   zh: {
-    nav_assess: "风险评估", nav_route: "手动航线", nav_ai: "AI 航线设计", nav_aircraft: "飞机资料", nav_history: "历史记录",
-    nav_about: "关于", nav_tips: "飞行提示", nav_programs: "培养计划", nav_ai_route: "AI 航线", network_label: "FLIGHTCHECK 航空网络",
-    network_status: "规划系统在线", ai_eyebrow: "AI 辅助航线探索",
+    nav_assess: "风险评估", nav_route: "航线规划器", nav_ai: "航线规划器", nav_aircraft: "飞机资料", nav_history: "历史记录",
+    nav_about: "关于", nav_tips: "飞行提示", nav_programs: "飞行员培养计划", nav_ai_route: "航线规划器",
+    nav_minimums: "个人最低标准", nav_resources: "资源", nav_training_aircraft: "训练飞机", nav_simulator: "航空公司模拟器数据",
+    ai_eyebrow: "训练航线探索",
     ai_title: "输入飞行任务。<br>比较时间与燃油。",
     ai_intro: "输入起飞机场、到达机场、机型和载重。FlightCheck 会根据最低燃油或最快时间生成候选航线，并验证每一个航点后再显示在地图上。",
     mission: "飞行任务", where_fly: "你准备飞往哪里？", departure: "起飞机场", arrival: "到达机场",
@@ -45,7 +47,7 @@ const translations = {
     ,landing_kicker: "学生飞行员决策支持", landing_title: "清晰规划。<br><em>目标明确地飞行。</em>",
     landing_intro: "FlightCheck 将飞行前风险检查、航线规划、天气因素、燃油估算和 AI 航点探索整合到一个专注的学生飞行员工作空间。",
     start_briefing: "开始飞行简报", route_plan: "规划航线", proof_risk: "PAVE 风险检查",
-    proof_route: "AI 候选航线", proof_history: "保存规划记录",
+    proof_route: "训练候选航线", proof_history: "保存规划记录",
     mission_heading: "在加速之前，先给自己一个慢下来思考的地方。",
     mission_copy: "通过结构化问题识别风险、比较航线方案，并明确需要使用官方航空资料和教员进一步核实的内容。",
     feature_route: "航线智能", feature_route_copy: "航点、目标高度、预计时间与燃油。",
@@ -60,9 +62,10 @@ const translations = {
     programs_intro: "比较不同航空公司的飞行学员计划、飞行学院与职业通道。FlightCheck 提供简短摘要，并将申请者带到官方页面。"
   },
   es: {
-    nav_assess: "Evaluar", nav_route: "Planificador", nav_ai: "Diseñador IA", nav_aircraft: "Aeronaves", nav_history: "Historial",
-    nav_about: "Acerca de", nav_tips: "Consejos", nav_programs: "Programas", nav_ai_route: "Ruta IA", network_label: "RED DE AVIACIÓN FLIGHTCHECK",
-    network_status: "SISTEMA DE PLANIFICACIÓN ACTIVO", ai_eyebrow: "Exploración de rutas asistida por IA",
+    nav_assess: "Evaluar", nav_route: "Planificador de rutas", nav_ai: "Planificador", nav_aircraft: "Aeronaves", nav_history: "Historial",
+    nav_about: "Acerca de", nav_tips: "Consejos de vuelo", nav_programs: "Programas de pilotos", nav_ai_route: "Planificador",
+    nav_minimums: "Mínimos personales", nav_resources: "Recursos", nav_training_aircraft: "Aeronaves de entrenamiento", nav_simulator: "Datos del simulador",
+    ai_eyebrow: "Exploración de rutas de entrenamiento",
     ai_title: "Define la misión.<br>Compara el resultado.",
     ai_intro: "Introduce los aeropuertos, la aeronave y la carga. FlightCheck solicita una ruta candidata optimizada por combustible o tiempo y valida cada punto antes de mostrarlo en el mapa.",
     mission: "MISIÓN", where_fly: "¿Adónde vas a volar?", departure: "Aeropuerto de salida", arrival: "Aeropuerto de llegada",
@@ -74,7 +77,7 @@ const translations = {
     ,landing_kicker: "APOYO PARA PILOTOS ESTUDIANTES", landing_title: "Planifica con claridad.<br><em>Vuela con propósito.</em>",
     landing_intro: "FlightCheck reúne evaluación de riesgos, rutas, meteorología, combustible y exploración de puntos asistida por IA en un solo espacio.",
     start_briefing: "Iniciar briefing", route_plan: "Planificar ruta", proof_risk: "Evaluación PAVE",
-    proof_route: "Rutas candidatas IA", proof_history: "Historial guardado",
+    proof_route: "Rutas candidatas de entrenamiento", proof_history: "Historial guardado",
     mission_heading: "Un lugar para reducir la velocidad antes de acelerar.",
     mission_copy: "Usa preguntas estructuradas para reconocer riesgos, comparar rutas y preparar lo que debe verificarse con fuentes oficiales y tu instructor.",
     feature_route: "Inteligencia de ruta", feature_route_copy: "Puntos, altitudes, tiempo y combustible estimados.",
@@ -153,6 +156,19 @@ document.querySelectorAll("[data-confirm-delete]").forEach((formElement) => {
     if (!window.confirm("Remove this assessment from your history?")) event.preventDefault();
   });
 });
+document.querySelectorAll("[data-confirm-reset]").forEach((formElement) => {
+  formElement.addEventListener("submit", (event) => {
+    if (!window.confirm("Reset your saved personal minimums?")) event.preventDefault();
+  });
+});
+const comparisonChecks = [...document.querySelectorAll('.compare-check input[type="checkbox"]')];
+comparisonChecks.forEach((input) => input.addEventListener("change", () => {
+  const selected = comparisonChecks.filter((item) => item.checked);
+  if (selected.length > 2) {
+    input.checked = false;
+    window.alert("Choose exactly two assessments.");
+  }
+}));
 
 const navlogRows = document.querySelector("#navlog-rows");
 if (navlogRows) {

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Compare Assessments — FlightCheck{% endblock %}
+{% block content %}
+<section class="page-hero"><div class="eyebrow"><span></span> PAVE COMPARISON</div><h1>Two briefings, side by side.</h1><p>Compare awareness indicators and category totals. A lower score is not a flight approval.</p></section>
+<section class="comparison-section">
+  <div class="comparison-grid">
+  {% for item in assessments %}
+    {% set scores = item.category_scores|from_json %}
+    <article><small>{{ item.created_at[:10] }} · #{{ item.id }}</small><h2>{{ item.flight_name }}</h2><strong class="comparison-score">{{ item.score }}<span>/100 · {{ item.risk_level }}</span></strong>
+      <dl>{% for category in ["Pilot","Aircraft","Environment","External pressures"] %}<div><dt>{{ category }}</dt><dd>{{ scores.get(category, 0) }}</dd></div>{% endfor %}</dl>
+      <a class="button ghost" href="{{ url_for('view_assessment', assessment_id=item.id) }}">View assessment →</a>
+    </article>
+  {% endfor %}
+  </div>
+  <a class="text-link" href="{{ url_for('history') }}">← Back to history</a>
+</section>
+{% endblock %}

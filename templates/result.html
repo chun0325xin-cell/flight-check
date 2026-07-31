@@ -7,7 +7,7 @@
     <p class="result-kicker">{{ flight_name }}</p>
     <h1>{{ result.decision }}</h1>
     <p>{{ result.summary }}</p>
-    <div class="result-actions"><a class="button primary" href="{{ url_for('briefing') }}#assessment">New assessment <span>↗</span></a><a class="text-link" href="{{ url_for('history') }}">View history →</a></div>
+    <div class="result-actions"><a class="button primary" href="{{ url_for('briefing') }}#assessment">Change plan and reassess <span>↗</span></a><a class="text-link" href="{{ url_for('history') }}">View history →</a></div>
   </div>
   <div class="score-card">
     <span>Risk indicator</span>
@@ -15,6 +15,10 @@
     <b>{{ result.level }} risk picture</b>
     <small>Educational indicator, not a flight release</small>
   </div>
+</section>
+<section class="result-explanation">
+  <div class="result-summary-card"><small>OVERALL AWARENESS LEVEL</small><h2>{{ result.level }}</h2><p>{{ result.summary }}</p></div>
+  <div class="result-summary-card"><small>TOP THREE CONCERNS</small>{% if result.top_concerns %}<ol>{% for item in result.top_concerns %}<li><strong>{{ item.category }} · {{ item.title }}</strong><span>{{ item.detail }}</span></li>{% endfor %}</ol>{% else %}<p>No entered factor produced a major flag. Continue verifying all required information.</p>{% endif %}</div>
 </section>
 <section class="findings-section">
   <div class="section-intro compact-intro"><div class="eyebrow"><span></span> What shaped the result</div><h2>Your risk factors.</h2><p>Address each item with a concrete mitigation. When factors stack up, the safest response may be to delay, change the plan, or ask for help.</p></div>
@@ -27,6 +31,12 @@
     </article>
     {% endfor %}
   </div>
+</section>
+<section class="result-review-grid">
+  <article><small>RISK COMBINATIONS</small><h2>Watch what stacks up.</h2>{% if result.risk_combinations %}<ul>{% for item in result.risk_combinations %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>No cross-category combination was identified from the entered answers.</p>{% endif %}</article>
+  <article><small>PERSONAL MINIMUMS</small><h2>Saved-limit comparison.</h2>{% if result.minimum_exceedances %}<ul>{% for item in result.minimum_exceedances %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>No saved personal minimum was exceeded, or no personal minimums have been saved yet.</p>{% endif %}</article>
+  <article><small>STILL TO VERIFY</small><h2>Missing information.</h2>{% if result.missing_information %}<ul>{% for item in result.missing_information %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p>The assessment reports the primary aircraft-specific checks as completed.</p>{% endif %}</article>
+  <article><small>MITIGATION QUESTIONS</small><h2>Before deciding.</h2><ul>{% for item in result.mitigation_questions %}<li>{{ item }}</li>{% endfor %}</ul></article>
 </section>
 <section class="next-steps">
   <div><small>Next step 01</small><strong>Verify</strong><p>Use official weather, NOTAM, aircraft, performance, and regulatory sources.</p></div>

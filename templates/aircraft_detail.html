@@ -4,7 +4,7 @@
 <section class="aircraft-detail-hero">
   <div class="aircraft-detail-photo"><img src="{{ aircraft.image }}" alt="{{ aircraft.maker }} {{ aircraft.name }} aircraft photograph"><span>VERIFIED FAMILY / MODEL PHOTO</span><a href="{{ aircraft.image_source }}" target="_blank" rel="noopener">PHOTO SOURCE · COMMONS ↗</a></div>
   <div class="aircraft-detail-intro">
-    <a href="{{ url_for('aircraft') }}">← Aircraft library</a>
+    <a href="{{ url_for('training_aircraft') if aircraft.class_group == 'general_aviation' else url_for('airline_simulator_data') }}">← {{ "Training aircraft" if aircraft.class_group == "general_aviation" else "Airline simulator data" }}</a>
     <div class="eyebrow"><span></span> {{ aircraft.maker|upper }} / {{ aircraft.family|upper }}</div>
     <h1>{{ aircraft.name }}</h1>
     <p>{{ aircraft.faa_model or aircraft.name }} · ICAO designator <strong>{{ aircraft.icao }}</strong></p>

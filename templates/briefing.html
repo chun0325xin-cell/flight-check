@@ -58,6 +58,7 @@
       <legend><span>01</span><div><small>P — PILOT</small>How ready are you?</div></legend>
       <div class="field-grid">
         <label class="field">Total flight hours<input type="number" name="experience" min="0" max="5000" value="45" required><small>Approximate logged experience</small></label>
+        <label class="field">Hours flown in the last 90 days<input type="number" name="recent_hours" min="0" max="500" value="8" required><small>Recent flight experience</small></label>
         <label class="field">Sleep in the last 24 hours<input type="number" name="sleep" min="0" max="24" step="0.5" value="7" required><small>Include naps</small></label>
       </div>
       <div class="choice-field"><span>Current stress or distraction level</span><div class="choice-grid">
@@ -65,6 +66,14 @@
         <label><input type="radio" name="stress" value="moderate"><span><b>Moderate</b><small>Some distraction</small></span></label>
         <label><input type="radio" name="stress" value="high"><span><b>High</b><small>Hard to focus</small></span></label>
       </div></div>
+      <details class="conditional-group"><summary>Review remaining IMSAFE items</summary>
+        <div class="field-grid two">
+          {% for name, label in [("illness","Illness concern"),("medication","Medication concern"),("alcohol","Alcohol concern"),("emotion_eating","Emotion or eating concern")] %}
+          <label class="field">{{ label }}<select name="{{ name }}"><option value="no">No concern identified</option><option value="yes">Yes — needs review</option></select></label>
+          {% endfor %}
+          <label class="field">Current distraction level<select name="distraction"><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option></select></label>
+        </div>
+      </details>
     </fieldset>
 
     <fieldset class="form-step" data-step="2">
@@ -74,7 +83,15 @@
         <label><input type="radio" name="aircraft_status" value="monitor"><span><b>Needs attention</b><small>Review before flight</small></span></label>
         <label><input type="radio" name="aircraft_status" value="unresolved"><span><b>Unresolved issue</b><small>Discrepancy exists</small></span></label>
       </div></div>
+      <div class="field-grid">
+        <label class="field">Aircraft model or tail-number label<input name="aircraft_label" maxlength="80" placeholder="e.g. C172S / N12345"></label>
+        <label class="field">Known discrepancies<textarea name="known_discrepancies" maxlength="1000" rows="3" placeholder="Leave blank only if none are known"></textarea></label>
+      </div>
       <label class="field slider-field">Planned fuel margin after landing <output id="fuel-output">75 min</output><input type="range" name="fuel_margin" min="0" max="180" value="75" data-output="fuel-output" data-suffix=" min"><small>Verify against regulations and aircraft-specific planning.</small></label>
+      <div class="field-grid two">
+        <label class="field">Weight and balance verified?<select name="weight_balance"><option value="no">Not yet</option><option value="yes">Yes, for this loading</option></select></label>
+        <label class="field">Performance calculations verified?<select name="performance_verified"><option value="no">Not yet</option><option value="yes">Yes, using approved data</option></select></label>
+      </div>
     </fieldset>
 
     <fieldset class="form-step" data-step="3">
@@ -85,14 +102,21 @@
         <label><input type="radio" name="weather" value="marginal"><span><b>Marginal</b><small>Near minimums</small></span></label>
       </div></div>
       <div class="field-grid three">
+        <label class="field">Ceiling (feet AGL)<input type="number" name="ceiling" min="0" max="60000" step="100" value="5000" required></label>
         <label class="field">Visibility (statute miles)<input type="number" name="visibility" min="0" max="100" step="0.1" value="10" required></label>
         <label class="field">Surface wind (knots)<input type="number" name="wind" min="0" max="150" value="8" required></label>
         <label class="field">Crosswind component (knots)<input type="number" name="crosswind" min="0" max="100" value="4" required></label>
+        <label class="field">Gust spread (knots)<input type="number" name="gust_spread" min="0" max="100" value="3" required></label>
       </div>
       <div class="choice-field compact"><span>Is any portion planned at night?</span><div class="choice-grid two">
         <label><input type="radio" name="night" value="no" checked><span><b>No</b></span></label>
         <label><input type="radio" name="night" value="yes"><span><b>Yes</b></span></label>
       </div></div>
+      <details class="conditional-group"><summary>Terrain and weather hazards</summary><div class="field-grid two">
+        {% for name, label in [("terrain_concerns","Terrain concerns"),("convection","Convection concerns"),("icing","Icing concerns"),("turbulence","Turbulence concerns")] %}
+        <label class="field">{{ label }}<select name="{{ name }}"><option value="no">None identified</option><option value="yes">Yes — needs mitigation</option></select></label>
+        {% endfor %}
+      </div></details>
     </fieldset>
 
     <fieldset class="form-step" data-step="4">
@@ -102,6 +126,12 @@
         <label><input type="radio" name="pressure_level" value="moderate"><span><b>Moderate</b><small>Plans depend on it</small></span></label>
         <label><input type="radio" name="pressure_level" value="high"><span><b>High</b><small>Strong expectations</small></span></label>
       </div></div>
+      <details class="conditional-group"><summary>Identify specific external pressures</summary><div class="field-grid three">
+        {% for name, label in [("passenger_pressure","Passenger expectations"),("cost_pressure","Cost pressure"),("destination_desire","Desire to reach destination")] %}
+        <label class="field">{{ label }}<select name="{{ name }}"><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option></select></label>
+        {% endfor %}
+      </div></details>
+      <label class="field">What conditions would make you delay, divert, or cancel?<textarea name="change_triggers" maxlength="1500" rows="4" placeholder="Write specific triggers before pressure builds."></textarea></label>
       <div class="final-check"><span>Before continuing</span><p>This tool does not check METARs, TAFs, NOTAMs, aircraft airworthiness, performance, or legal requirements. Use official sources and qualified instruction.</p></div>
     </fieldset>
 
