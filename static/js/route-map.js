@@ -59,7 +59,12 @@ function escapeMapText(value) {
 }
 
 function initializeRouteMap() {
-  if (typeof window.L === "undefined") return;
+  if (typeof window.L === "undefined") {
+    document.querySelectorAll("[data-route-map]").forEach((container) => {
+      container.innerHTML = '<div class="route-map-error"><strong>Map could not load.</strong><span>The waypoint list below is still available. Refresh the page to try again.</span></div>';
+    });
+    return;
+  }
   document.querySelectorAll("[data-route-map]").forEach((container) => {
   const dataElement = document.querySelector(`#${container.dataset.routeMap}`);
   if (!dataElement) return;

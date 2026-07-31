@@ -331,6 +331,14 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn("greatCircleLeg", script)
         self.assertIn("GEODESIC ROUTE", script)
         self.assertIn("flight-waypoint-label", script)
+        self.assertTrue((flightcheck.BASE_DIR / "static" / "vendor" / "leaflet" / "leaflet.js").exists())
+        self.assertTrue((flightcheck.BASE_DIR / "static" / "vendor" / "leaflet" / "leaflet.css").exists())
+
+    def test_route_result_serves_leaflet_locally(self):
+        template = (flightcheck.BASE_DIR / "templates" / "ai_plan_result.html").read_text(encoding="utf-8")
+        self.assertIn("vendor/leaflet/leaflet.js", template)
+        self.assertIn("vendor/leaflet/leaflet.css", template)
+        self.assertNotIn("unpkg.com/leaflet", template)
 
     def test_beijing_to_new_york_corridor_uses_polar_great_circle(self):
         airports = flightcheck.global_airports_by_code()
