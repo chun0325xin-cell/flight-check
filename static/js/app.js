@@ -4,7 +4,7 @@ const translations = {
   en: {
     nav_assess: "Assess", nav_route: "Route Planner", nav_ai: "Route Planner", nav_aircraft: "Aircraft", nav_history: "History",
     nav_about: "About", nav_tips: "Flight Tips", nav_programs: "Pilot Programs", nav_ai_route: "Route Planner",
-    nav_minimums: "Personal Minimums", nav_resources: "Resources", nav_training_aircraft: "Training Aircraft", nav_simulator: "Airline Simulator Data",
+    nav_minimums: "Personal Minimums", nav_resources: "Resources", nav_training_aircraft: "Training Aircraft", nav_simulator: "Commercial Aircraft",
     ai_eyebrow: "Training route exploration",
     ai_title: "Tell it the mission.<br>Compare the tradeoff.",
     ai_intro: "Enter the airports, aircraft, and loading. FlightCheck asks the AI for a candidate optimized for lowest estimated fuel or fastest time, then validates each waypoint before placing it on the map.",
@@ -34,7 +34,7 @@ const translations = {
   zh: {
     nav_assess: "风险评估", nav_route: "航线规划器", nav_ai: "航线规划器", nav_aircraft: "飞机资料", nav_history: "历史记录",
     nav_about: "关于", nav_tips: "飞行提示", nav_programs: "飞行员培养计划", nav_ai_route: "航线规划器",
-    nav_minimums: "个人最低标准", nav_resources: "资源", nav_training_aircraft: "训练飞机", nav_simulator: "航空公司模拟器数据",
+    nav_minimums: "个人最低标准", nav_resources: "资源", nav_training_aircraft: "训练飞机", nav_simulator: "民航客机",
     ai_eyebrow: "训练航线探索",
     ai_title: "输入飞行任务。<br>比较时间与燃油。",
     ai_intro: "输入起飞机场、到达机场、机型和载重。FlightCheck 会根据最低燃油或最快时间生成候选航线，并验证每一个航点后再显示在地图上。",
@@ -64,7 +64,7 @@ const translations = {
   es: {
     nav_assess: "Evaluar", nav_route: "Planificador de rutas", nav_ai: "Planificador", nav_aircraft: "Aeronaves", nav_history: "Historial",
     nav_about: "Acerca de", nav_tips: "Consejos de vuelo", nav_programs: "Programas de pilotos", nav_ai_route: "Planificador",
-    nav_minimums: "Mínimos personales", nav_resources: "Recursos", nav_training_aircraft: "Aeronaves de entrenamiento", nav_simulator: "Datos del simulador",
+    nav_minimums: "Mínimos personales", nav_resources: "Recursos", nav_training_aircraft: "Aeronaves de entrenamiento", nav_simulator: "Aeronaves comerciales",
     ai_eyebrow: "Exploración de rutas de entrenamiento",
     ai_title: "Define la misión.<br>Compara el resultado.",
     ai_intro: "Introduce los aeropuertos, la aeronave y la carga. FlightCheck solicita una ruta candidata optimizada por combustible o tiempo y valida cada punto antes de mostrarlo en el mapa.",

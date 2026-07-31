@@ -47,7 +47,7 @@ class FlightCheckTests(unittest.TestCase):
         self.assertIn(b"A student-pilot preflight risk and planning workspace.", response.data)
         self.assertIn(b"/personal-minimums", response.data)
         self.assertIn(b"/training-aircraft", response.data)
-        self.assertIn(b"/airline-simulator-data", response.data)
+        self.assertIn(b"/commercial-aircraft", response.data)
         self.assertNotIn(b"FLIGHTCHECK AVIATION NETWORK", response.data)
         self.assertIn(b'class="planner-cta"', response.data)
         self.assertIn(b"Route planner", response.data)
@@ -139,9 +139,10 @@ class FlightCheckTests(unittest.TestCase):
         self.assertEqual(training.status_code, 200)
         self.assertIn(b"Cessna 152", training.data)
         self.assertNotIn(b"A350-900", training.data)
-        simulator = self.client.get("/airline-simulator-data")
+        simulator = self.client.get("/commercial-aircraft")
         self.assertEqual(simulator.status_code, 200)
-        self.assertIn(b"AIRLINE SIMULATOR DATA", simulator.data)
+        self.assertIn(b"COMMERCIAL AIRCRAFT", simulator.data)
+        self.assertIn(b"$110.6 million", simulator.data)
         self.assertNotIn(b"Cessna 152", simulator.data)
 
     def test_airbus_families_do_not_share_the_wrong_photo(self):

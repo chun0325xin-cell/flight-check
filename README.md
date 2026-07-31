@@ -17,7 +17,7 @@ FlightCheck by PilotBrief Lab is a student-pilot preflight risk and planning wor
 - Explainable risk indicator with factor-by-factor feedback
 - Session-isolated SQLite storage for assessments, routes, and personal minimums
 - View, rename, compare, trend, and delete controls for saved assessments
-- Separate training-aircraft reference and airline-simulator data sections
+- Separate training-aircraft and commercial-aircraft reference sections
 - Responsive, accessible interface for desktop and mobile
 - Clear safety boundaries throughout the experience
 

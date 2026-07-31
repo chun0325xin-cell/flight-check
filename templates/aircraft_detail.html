@@ -4,7 +4,7 @@
 <section class="aircraft-detail-hero">
   <div class="aircraft-detail-photo"><img src="{{ aircraft.image }}" alt="{{ aircraft.maker }} {{ aircraft.name }} aircraft photograph"><span>VERIFIED FAMILY / MODEL PHOTO</span><a href="{{ aircraft.image_source }}" target="_blank" rel="noopener">PHOTO SOURCE · COMMONS ↗</a></div>
   <div class="aircraft-detail-intro">
-    <a href="{{ url_for('training_aircraft') if aircraft.class_group == 'general_aviation' else url_for('airline_simulator_data') }}">← {{ "Training aircraft" if aircraft.class_group == "general_aviation" else "Airline simulator data" }}</a>
+    <a href="{{ url_for('training_aircraft') if aircraft.class_group == 'general_aviation' else url_for('airline_simulator_data') }}">← {{ "Training aircraft" if aircraft.class_group == "general_aviation" else "Commercial aircraft" }}</a>
     <div class="eyebrow"><span></span> {{ aircraft.maker|upper }} / {{ aircraft.family|upper }}</div>
     <h1>{{ aircraft.name }}</h1>
     <p>{{ aircraft.faa_model or aircraft.name }} · ICAO designator <strong>{{ aircraft.icao }}</strong></p>
@@ -12,11 +12,11 @@
   </div>
 </section>
 <section class="aircraft-spec-section">
-  <div class="aircraft-spec-heading"><div><small>FAA + MANUFACTURER DATA + GAME MASTER LIST</small><h2>Aircraft at a glance.</h2></div><p>Dimensions and weights come from FAA data where available, with manufacturer planning documents filling verified gaps. First-flight dates identify the exact model when verified; otherwise, the card clearly labels the aircraft-family program date. Game capacity, range, and price come from The Airline Simulator list you supplied.</p></div>
+  <div class="aircraft-spec-heading"><div><small>FAA + MANUFACTURER REFERENCE DATA</small><h2>Aircraft at a glance.</h2></div><p>Dimensions and weights come from FAA data where available, with manufacturer planning documents filling verified gaps. First-flight dates identify the exact model when verified; otherwise, the card labels the aircraft-family program date. Prices are historical real-world list-price references or estimates, not airline transaction quotes.</p></div>
   <div class="aircraft-spec-grid">
     <div><small>First flight</small><strong class="date-value">{{ aircraft.first_flight }}</strong><span>{{ aircraft.first_flight_scope }}</span></div>
-    <div><small>{% if aircraft.price == "—" %}Maximum occupants{% else %}Game maximum seats{% endif %}</small><strong>{{ aircraft.seats }}</strong><span>{% if aircraft.price == "—" %}people{% else %}passengers{% endif %}</span></div>
-    <div><small>{% if aircraft.price == "—" %}Reference range{% else %}Game range{% endif %}</small><strong>{{ aircraft.range_km }}</strong><span>km · {{ aircraft.range_nm }} nm</span></div>
+    <div><small>{% if aircraft.price == "—" %}Maximum occupants{% else %}Reference capacity{% endif %}</small><strong>{{ aircraft.seats }}</strong><span>{% if aircraft.price == "—" %}people{% else %}passengers{% endif %}</span></div>
+    <div><small>Reference range</small><strong>{{ aircraft.range_km }}</strong><span>km · {{ aircraft.range_nm }} nm</span></div>
     <div><small>Maximum takeoff weight</small><strong>{% if aircraft.mtow_lb %}{{ "{:,.0f}".format(aircraft.mtow_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.mtow_lb %}lb{% else %}not available in FAA match{% endif %}</span></div>
     <div><small>Wingspan</small><strong>{% if aircraft.wingspan_ft %}{{ "%.1f"|format(aircraft.wingspan_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.wingspan_ft %}ft · {{ "%.1f"|format(aircraft.wingspan_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
     <div><small>Overall length</small><strong>{% if aircraft.length_ft %}{{ "%.1f"|format(aircraft.length_ft) }}{% else %}—{% endif %}</strong><span>{% if aircraft.length_ft %}ft · {{ "%.1f"|format(aircraft.length_ft * 0.3048) }} m{% else %}not available in FAA match{% endif %}</span></div>
@@ -24,11 +24,11 @@
     <div><small>Maximum landing weight</small><strong>{% if aircraft.landing_weight_lb is number %}{{ "{:,.0f}".format(aircraft.landing_weight_lb) }}{% else %}—{% endif %}</strong><span>{% if aircraft.landing_weight_lb is number %}lb{% else %}not available{% endif %}</span></div>
     <div><small>Approach reference</small><strong>{{ aircraft.approach_speed_knot or "—" }}</strong><span>{% if aircraft.approach_speed_knot %}knots · FAA database value{% else %}not available{% endif %}</span></div>
     <div><small>ICAO wake category</small><strong>{{ aircraft.wake_category or "—" }}</strong><span>planning reference</span></div>
-    <div><small>{% if aircraft.price == "—" %}Catalog role{% else %}Game base price{% endif %}</small><strong>{% if aircraft.price == "—" %}Training / GA{% else %}${{ aircraft.price }}{% endif %}</strong><span>{% if aircraft.price == "—" %}reference aircraft{% else %}simulator value{% endif %}</span></div>
+    <div><small>Price</small><strong>{{ aircraft.price_display }}</strong><span>{{ aircraft.price_basis }} · USD</span></div>
   </div>
   <div class="aircraft-data-sources">
     <div><strong>FAA Aircraft Characteristics Database</strong><p>Dimensions, weights, engine class, approach speed, and wake category matched through the ICAO designator.</p><a href="https://www.faa.gov/airports/engineering/aircraft_char_database" target="_blank" rel="noopener">View official dataset ↗</a></div>
-    <div><strong>The Airline Simulator master list</strong><p>Variant name, game capacity, game range, ICAO code, and simulator price.</p><a href="https://the-airline-simulator.fandom.com/wiki/Category:Aircraft" target="_blank" rel="noopener">View source page ↗</a></div>
+    <div><strong>Published and estimated aircraft prices</strong><p>Historical manufacturer list prices are used when available. Other values are approximate historical references because negotiated airline prices are rarely public.</p><a href="https://www.airbus.com/sites/g/files/jlcbta136/files/2021-07/new-airbus-list-prices-2018.pdf" target="_blank" rel="noopener">View Airbus list-price reference ↗</a></div>
     {% if aircraft.spec_source %}<div><strong>Manufacturer planning data</strong><p>This model is not fully represented in the FAA dataset, so missing dimensions and weights were supplemented from manufacturer planning material.</p><a href="{{ aircraft.spec_source }}" target="_blank" rel="noopener">View supplemental source ↗</a></div>{% endif %}
   </div>
   <p class="map-disclaimer">Educational reference only. Do not use these summary values for weight-and-balance, performance, dispatch, airport compatibility, or operational decisions. Consult approved aircraft documents.</p>

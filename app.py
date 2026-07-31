@@ -1000,6 +1000,24 @@ def present_ai_route(row: sqlite3.Row | dict) -> dict:
 
 
 def load_aircraft_catalog() -> list[dict]:
+    # Manufacturers generally do not publish current transaction prices.
+    # These historical list-price references are shown in USD millions; models
+    # without a published figure fall back to an approximate historical value
+    # from the supplied catalog and are labeled accordingly in the UI.
+    published_price_usd_millions = {
+        "A318-100": 77.4, "A319-100": 92.3, "A320-200": 101.0,
+        "A321-200": 118.3, "A319neo": 101.5, "A320neo": 110.6,
+        "A321neo": 129.5, "A321LR": 129.5, "A321XLR": 142.0,
+        "A330-200": 238.5, "A330-300": 264.2, "A330-800": 259.9,
+        "A330-900": 296.4, "A350-900": 317.4, "A350-900ULR": 317.4,
+        "A350-1000": 366.5, "A350-1000ULR": 366.5, "A380-800": 445.6,
+        "737-700": 89.1, "737-800": 106.1, "737-900ER": 112.6,
+        "737 MAX 7": 99.7, "737 MAX 8": 121.6, "737 MAX 8200": 121.6,
+        "737 MAX 9": 128.9, "737 MAX 10": 134.9, "747-8": 418.4,
+        "777-200ER": 306.6, "777-200LR": 346.9, "777-300ER": 375.5,
+        "777-9": 442.2, "787-8 Dreamliner": 248.3,
+        "787-9 Dreamliner": 292.5, "787-10 Dreamliner": 338.4,
+    }
     manufacturers = {
         "Airbus", "Boeing", "Bombardier", "Embraer", "ATR",
         "De Havilland Canada", "Comac", "Cessna", "Piper", "Diamond",
@@ -1196,6 +1214,11 @@ def load_aircraft_catalog() -> list[dict]:
         if len(values) < 4:
             continue
         icao, range_text, seats, price = values[:4]
+        catalog_price_millions = (
+            int(price.lower().replace("k", "").replace(",", "")) / 1000
+            if price != "—" else None
+        )
+        price_millions = published_price_usd_millions.get(variant, catalog_price_millions)
         try:
             range_km = int(range_text.replace(",", ""))
         except ValueError:
@@ -1247,6 +1270,14 @@ def load_aircraft_catalog() -> list[dict]:
             "range_group": range_group,
             "seats": seats,
             "price": price,
+            "price_display": f"${price_millions:,.1f} million" if price_millions is not None else "Not listed",
+            "price_basis": (
+                "Published historical list price"
+                if variant in published_price_usd_millions
+                else "Approximate historical list price"
+                if price_millions is not None
+                else "No public price"
+            ),
             "class_group": aircraft_class,
             "class_name": {
                 "widebody": "Widebody", "narrowbody": "Narrowbody",
@@ -1293,6 +1324,7 @@ def training_aircraft():
 
 
 @app.get("/airline-simulator-data")
+@app.get("/commercial-aircraft")
 def airline_simulator_data():
     items = [item for item in load_aircraft_catalog() if item["class_group"] != "general_aviation"]
     return render_template("aircraft.html", aircraft=items, simulator_only=True)

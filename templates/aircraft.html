@@ -2,7 +2,7 @@
 {% block title %}Aircraft Library — FlightCheck{% endblock %}
 {% block content %}
 <section class="aircraft-hero">
-  <div><div class="eyebrow"><span></span> {{ "AIRLINE SIMULATOR DATA" if simulator_only else "AIRLINER + TRAINING AIRCRAFT INDEX" }}</div><h1>{{ "Explore simulator aircraft." if simulator_only else "Explore the fleet." }}</h1><p>{% if simulator_only %}Airliner catalog values reproduced from The Airline Simulator source and clearly separated from real training-aircraft references.{% else %}Browse airline, training, and general-aviation aircraft by manufacturer, range, and operating category.{% endif %}</p></div>
+  <div><div class="eyebrow"><span></span> {{ "COMMERCIAL AIRCRAFT" if simulator_only else "AIRLINER + TRAINING AIRCRAFT INDEX" }}</div><h1>{{ "Explore commercial aircraft." if simulator_only else "Explore the fleet." }}</h1><p>{% if simulator_only %}Compare passenger airliners by manufacturer, range, aircraft class, and approximate real-world price.{% else %}Browse airline, training, and general-aviation aircraft by manufacturer, range, and operating category.{% endif %}</p></div>
   <div class="aircraft-hero-code"><span>FC / TYPE INDEX</span><strong>{{ aircraft|length }}</strong><small>AIRCRAFT PROFILES</small></div>
 </section>
 <section class="aircraft-catalog">
@@ -13,15 +13,15 @@
     <label class="aircraft-search">Search<input id="filter-search" type="search" placeholder="Aircraft, family, or ICAO code…"></label>
     <button type="button" id="clear-aircraft-filters">Clear filters</button>
   </div>
-  <div class="catalog-status"><span><b id="aircraft-count">{{ aircraft|length }}</b> aircraft shown</span><small>Game data reproduced from the supplied master list. Real-world performance varies by configuration, payload, and conditions.</small></div>
+  <div class="catalog-status"><span><b id="aircraft-count">{{ aircraft|length }}</b> aircraft shown</span><small>Prices are historical list-price references or estimates in USD; actual airline purchase prices are usually confidential.</small></div>
   <div class="aircraft-grid" id="aircraft-grid">
     {% for item in aircraft %}
     <article class="aircraft-card" data-maker="{{ item.maker }}" data-range="{{ item.range_group }}" data-class="{{ item.class_group }}" data-name="{{ (item.name ~ ' ' ~ item.family ~ ' ' ~ item.icao)|lower }}">
       <a class="aircraft-card-link" href="{{ url_for('aircraft_detail', slug=item.slug) }}" aria-label="View {{ item.name }} aircraft details">
       <div class="aircraft-photo"><img src="{{ item.image }}" alt="{{ item.maker }} {{ item.name }} aircraft photograph" loading="lazy"><span>{{ "%02d"|format(loop.index) }}</span><i>Verified family / model photo</i></div>
       <div class="aircraft-card-body">
-        <small>{{ item.maker|upper }} / {{ item.family|upper }}</small><h2>{{ item.name }}</h2><p>ICAO {{ item.icao }} · maximum game capacity {{ item.seats }} seats</p>
-        <dl><div><dt>Reference range</dt><dd>{{ item.range_km }} km</dd></div><div><dt>Approx. nautical</dt><dd>{{ item.range_nm }} nm</dd></div><div><dt>Class</dt><dd>{{ item.class_name }}</dd></div><div><dt>{% if item.price == "—" %}Catalog status{% else %}Game base price{% endif %}</dt><dd>{% if item.price == "—" %}Reference aircraft{% else %}${{ item.price }}{% endif %}</dd></div></dl>
+        <small>{{ item.maker|upper }} / {{ item.family|upper }}</small><h2>{{ item.name }}</h2><p>ICAO {{ item.icao }} · reference capacity {{ item.seats }} seats</p>
+        <dl><div><dt>Reference range</dt><dd>{{ item.range_km }} km</dd></div><div><dt>Approx. nautical</dt><dd>{{ item.range_nm }} nm</dd></div><div><dt>Class</dt><dd>{{ item.class_name }}</dd></div><div><dt>Price</dt><dd>{{ item.price_display }}</dd></div></dl>
       </div>
       </a>
       <a class="aircraft-photo-source" href="{{ item.image_source }}" target="_blank" rel="noopener" aria-label="Open photo source for {{ item.name }}">Photo source · Wikimedia Commons ↗</a>
@@ -29,6 +29,6 @@
     {% endfor %}
   </div>
   <div class="aircraft-empty" id="aircraft-empty" hidden><strong>No aircraft match these filters.</strong><button type="button">Reset the catalog</button></div>
-  <p class="aircraft-source-note">Airliner game values come from the user-supplied <a href="https://the-airline-simulator.fandom.com/wiki/Category:Aircraft" target="_blank" rel="noopener">The Airline Simulator Wiki master list</a>, whose community text is offered under CC BY-SA. Training-aircraft reference values are matched to FAA aircraft-characteristics data. Photos are representative real-aircraft images served from Wikimedia Commons. Verify operational specifications with manufacturers and approved aircraft documentation.</p>
+  <p class="aircraft-source-note">The commercial-aircraft lineup began with the user-supplied <a href="https://the-airline-simulator.fandom.com/wiki/Category:Aircraft" target="_blank" rel="noopener">The Airline Simulator Wiki master list</a>. Prices are displayed in real USD millions using published historical manufacturer list prices where available and approximate historical list prices otherwise; they are not current sales quotes. Training-aircraft references are matched to FAA aircraft-characteristics data. Photos are served from Wikimedia Commons. Verify specifications with manufacturers and approved aircraft documentation.</p>
 </section>
 {% endblock %}
